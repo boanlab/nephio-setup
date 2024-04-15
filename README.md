@@ -143,12 +143,27 @@ sudo apt-get install openvswitch-switch -y  # for ovs-vsctl
 sudo apt-get install net-tools -y  # for ifconfig
 ```
 
-For Worker nodes, install gtp5g which is a Kernel module for 5G:
+For worker nodes, install gtp5g which is a Kernel module for 5G:
 ```bash
+##### -----=[ In ALL Worker clusters ]=----- ####
 wget https://github.com/free5gc/gtp5g/archive/refs/tags/v0.8.3.tar.gz
 tar xvfz v0.8.3.tar.gz
 cd gtp5g-0.8.3/
 sudo make install
+```
+
+For worker nodes, install some more packages by:
+```bash
+##### -----=[ In ALL Worker clusters ]=----- ####
+kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/nephio/core/workload-crds@main
+kpt fn render workload-crds
+kpt live init workload-crds
+kpt live apply workload-crds --reconcile-timeout=15m --output=table
+
+kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/infra/capi/multus@main
+kpt fn render multus
+kpt live init multus
+kpt live apply multus --reconcile-timeout=15m --output=table
 ```
 
 ### 1.5 Prepare Nephio
