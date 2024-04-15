@@ -8,7 +8,7 @@ This document demonstrates the installation guide for Nephio R2 and [Free5CP dem
 4. Configure Network Topology
 5. Deploying Free5gc-cp
 6. Deploying UPF, AMF and SMF
-7. Verify using UERANSIM
+7. Deploying UERANSIM
 
 ## 1. Prerequsites
 ### 1.1 Servers
@@ -463,3 +463,213 @@ I0415 05:50:46.232790      12 main.go:585] "level"=1 "msg"="next sync" "wait_tim
 > This will solve the issue and make the load balancer IP work again.
 
 If you seen all `edge01`, `edge02` and `regional` clusters having proper git-sync, you can proceed to to the Step 4.
+
+# 4. Configure Network Topology
+Nephio utilizes SR Linux to interconnect clusters. However, since we are using multiple servers, we need to connect them as if they were connected. Therefore, we will be using OVS to connect between SR Linux to each clusters.
+
+## 4.1 Setup Containerlab - `mgmt`
+Create a network topology file as follows:
+```yaml
+name: 5g
+prefix: net
+topology:
+  kinds:
+    srl:
+      type: ixrd3
+      image: ghcr.io/nokia/srlinux:22.11.2-116
+  nodes:
+    leaf:
+      kind: srl
+      ports:
+        - 57400:57400
+      mgmt-ipv4: 172.20.20.120
+  links:
+    - endpoints: ["leaf:e1-1", "host:sr-r"]
+    - endpoints: ["leaf:e1-2", "host:sr-e1"]
+    - endpoints: ["leaf:e1-3", "host:sr-e2"]
+```
+
+This will deploy a SR Linux having `e1-1`, `e1-2`, `e1-3` and those are connected to host's `sr-r`, `'sr-e1` and `sr-e1`. Also, we are going to connect each interfaces to a ovs tunnel that is connected to the remote server using VXLAN. Deploy containerlab using
+```bash
+##### -----=[ In mgmt cluster ]=----- ####
+sudo containerlab deploy --topo topology.yaml
+```
+
+So for example, it will be something like:
+```
+leaf -- e1-1(veth) -- sr-r(veth) -- br-tun-r(ovs) -- vxlan0 -- VXLAN -- vxlan0 -- eth1(ovs)
+```
+
+Create OVS bridge in mgmt cluster by:
+```bash
+##### -----=[ In mgmt cluster ]=----- ####
+sudo ovs-vsctl add-br br-tun-r
+sudo ovs-vsctl add-br br-tun-e1
+sudo ovs-vsctl add-br br-tun-e2
+
+sudo ifconfig br-tun-r up
+sudo ifconfig br-tun-e1 up
+sudo ifconfig br-tun-e2 up
+```
+
+Then prepare to connect vxlans in mgmt cluster by
+```bash
+##### -----=[ In mgmt cluster ]=----- ####
+sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.121 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48317 options:tag=321
+sudo ovs-vsctl add-port br-tun-e1 vxlan1 -- set interface vxlan1 type=vxlan options:remote_ip=10.10.0.122 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48318 options:tag=321
+sudo ovs-vsctl add-port br-tun-e2 vxlan2 -- set interface vxlan2 type=vxlan options:remote_ip=10.10.0.123 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48319 options:tag=321
+```
+
+## 4.2 Setup OVS - `edge01`, `edge02` and `regional`
+Then in each worker clusters, connect the otherpart by:
+```bash
+##### -----=[ In regional cluster ]=----- ####
+sudo ovs-vsctl add-br eth1
+sudo ifconfig eth1 up
+sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48317 options:tag=321
+```
+
+```bash
+##### -----=[ In edge01 cluster ]=----- ####
+sudo ovs-vsctl add-br eth1
+sudo ifconfig eth1 up
+sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48318 options:tag=321
+```
+
+```bash
+##### -----=[ In edge02 cluster ]=----- ####
+sudo ovs-vsctl add-br eth1
+sudo ifconfig eth1 up
+sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48319 options:tag=321
+```
+
+Also, create interfaces for `eth1.2` ~ `eth1.6`. These interfaces will be later connected to n3, n4, n6. Those interfaces will be connected to `eth1` OVS bridge in each worker nodes. So perform:
+```bash
+##### -----=[ In ALL Worker clusters ]=----- ####
+sudo ip link add eth1.2 type veth peer name eth1.2-br
+sudo ip link add eth1.3 type veth peer name eth1.3-br
+sudo ip link add eth1.4 type veth peer name eth1.4-br
+sudo ip link add eth1.5 type veth peer name eth1.5-br
+sudo ip link add eth1.6 type veth peer name eth1.6-br
+
+sudo ovs-vsctl add-port eth1 eth1.2-br
+sudo ovs-vsctl add-port eth1 eth1.3-br
+sudo ovs-vsctl add-port eth1 eth1.4-br
+sudo ovs-vsctl add-port eth1 eth1.5-br
+sudo ovs-vsctl add-port eth1 eth1.6-br
+```
+
+Till now, we have actually setup the connection. This corresponds to 
+```bash
+export E2EDIR=${E2EDIR:-$HOME/test-infra/e2e}
+export LIBDIR=${LIBDIR:-$HOME/test-infra/e2e/lib}
+export TESTDIR=${TESTDIR:-$HOME/test-infra/e2e/tests/free5gc}
+./test-infra/e2e/provision/hacks/inter-connect_workers.sh
+./test-infra/e2e/provision/hacks/vlan-interfaces.sh
+```
+
+## 4.3 Apply Nephio Networks
+Then apply the network settings to Nephio by:
+```
+##### -----=[ In mgmt cluster ]=----- ####
+kubectl apply -f test-infra/e2e/tests/free5gc/002-network.yaml
+kubectl apply -f test-infra/e2e/tests/free5gc/002-secret.yaml
+```
+
+Also, we have to setup RawTopology as well. An example is like below:
+```yaml
+apiVersion: topo.nephio.org/v1alpha1
+kind: RawTopology
+metadata:
+  name: nephio
+spec:
+  nodes:
+    srl:
+      address: 10.10.0.120:57400
+      provider: srl.nokia.com
+    mgmt:
+      provider: host
+    regional:
+      provider: host
+      labels:
+        nephio.org/cluster-name: regional
+    edge01:
+      provider: host
+      labels:
+        nephio.org/cluster-name: edge01
+    edge02:
+      provider: host
+      labels:
+        nephio.org/cluster-name: edge02
+  links:
+  - endpoints:
+    - { nodeName: srl, interfaceName: e1-1}
+    - { nodeName: regional, interfaceName: eth1}
+  - endpoints:
+    - { nodeName: srl, interfaceName: e1-2}
+    - { nodeName: edge01, interfaceName: eth1}
+  - endpoints:
+    - { nodeName: srl, interfaceName: e1-3}
+    - { nodeName: edge02, interfaceName: eth1}
+```
+
+Be aware that the srl.address shall be provided as the `mgmt` cluster's SR Linux container. Apply this using:
+```bash
+kubectl create -f topo.yaml
+```
+
+# 5. Deploying Free5gc-cp
+Now, deploy Free5gc-CP as usual: https://docs.nephio.org/docs/guides/user-guides/exercise-1-free5gc/#step-4-deploy-free5gc-control-plane-functions. The Nephio webui will be running in `10.10.0.132:7007`. 
+
+The regional cluster utilizes host path PV to store data for `mongodb`. Create a new PV in `mgmt` cluster by:
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-mongodb-0
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+  hostPath:
+    path: /home/boan/nephio/mongodb/
+```
+
+Then
+```bash
+##### -----=[ In mgmt cluster ]=----- ####
+kubectl create -f mongodb-pv.yaml
+```
+
+> Also, just like the `gitea` PVs in `mgmt` cluster, we need to manually `chmod` the local directory. Otherwise, the `mongodb` will not setup.
+> ```bash
+> sudo chmod 777 -R /home/boan/nephio/mongodb
+> ```
+
+
+Then deploy free5gc operators using the following command:
+```bash
+##### -----=[ In mgmt cluster ]=----- ####
+kubectl apply -f test-infra/e2e/tests/free5gc/004-free5gc-operator.yaml
+```
+
+This will deploy 
+- `free5gc/free5gc-operator` pods in `edge01`, `edge02` and `regional` clusters.
+- `free5gc-cp/free5gc-NFV` pods in `regional` cluster. Ex) `free5gc-ausf`, `nrf`, `nssf`,` pcf`, `udm`, etc.
+
+# 6. Deploying UPF, AMF and SMF
+Once Free5gc-CP was setup properly, you can pretty much deploy other UPF, AMF and SMF as usual by:
+
+```
+##### -----=[ In mgmt cluster ]=----- ####
+kubectl apply -f test-infra/e2e/tests/free5gc/005-edge-free5gc-upf.yaml
+kubectl apply -f test-infra/e2e/tests/free5gc/006-regional-free5gc-amf.yaml
+kubectl apply -f test-infra/e2e/tests/free5gc/006-regional-free5gc-smf.yaml
+```
+- TBD
+
+# 7. Deploying UERANSIM
+- TBD
