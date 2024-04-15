@@ -138,14 +138,22 @@ Install Docker by:
 ```
 
 Also, for future network SDN connection across clusters, we will be using OVS. So install OVS by:
-```
+```bash
 sudo apt-get install openvswitch-switch -y  # for ovs-vsctl
 sudo apt-get install net-tools -y  # for ifconfig
 ```
 
+For Worker nodes, install gtp5g which is a Kernel module for 5G:
+```bash
+wget https://github.com/free5gc/gtp5g/archive/refs/tags/v0.8.3.tar.gz
+tar xvfz v0.8.3.tar.gz
+cd gtp5g-0.8.3/
+sudo make install
+```
+
 ### 1.5 Prepare Nephio
 Nephio utilizes `gitea` and `gitea` utilizes 2 local path PVs. Therefore, create a PV with:
-```
+```yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
