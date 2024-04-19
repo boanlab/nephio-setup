@@ -624,7 +624,8 @@ spec:
 
 Be aware that the srl.address shall be provided as the `mgmt` cluster's SR Linux container. Apply this using:
 ```bash
-kubectl create -f topo.yaml
+##### -----=[ In mgmt cluster ]=----- ####
+$ kubectl create -f topo.yaml
 ```
 
 # 5. Deploying Free5gc-cp
@@ -649,8 +650,8 @@ spec:
 
 Then
 ```bash
-##### -----=[ In mgmt cluster ]=----- ####
-kubectl create -f mongodb-pv.yaml
+##### -----=[ In regional cluster ]=----- ####
+$ kubectl create -f mongodb-pv.yaml
 ```
 
 > Also, just like the `gitea` PVs in `mgmt` cluster, we need to manually `chmod` the local directory. Otherwise, the `mongodb` will not setup.
@@ -675,7 +676,7 @@ $ kpt live apply multus --reconcile-timeout=15m --output=table
 Then deploy free5gc operators using the following command:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-kubectl apply -f test-infra/e2e/tests/free5gc/004-free5gc-operator.yaml
+$ kubectl apply -f test-infra/e2e/tests/free5gc/004-free5gc-operator.yaml
 ```
 
 This will deploy 
