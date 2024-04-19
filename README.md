@@ -13,7 +13,7 @@ This document demonstrates the installation guide for Nephio R2 and [Free5CP dem
 ## 1. Prerequsites
 ### 1.1 Servers
 The environment will utilize 4 servers:
-> Official Nephio GCP utilizes single server with 8 vCPU and 8GB RAM. However, for our purpose, we will be using extra resources.
+> Official Nephio GCP utilizes single server with 8 vCPU and 8GB RAM. However, for our purpose, we will be using extra resources. In the case of the IP address, you must configure it by changing it to the IP of the installation environment.
 
 |Type|Spec|K8s Cluster Name|IP Address|Pod CIDR|
 |--|--|--|--|--|
@@ -24,27 +24,28 @@ The environment will utilize 4 servers:
 
 ### 1.2 Kubernetes
 The official environment provisions Kubernetes with KinD. To have as similar environment as possible, we will be using:
-- **Kubernetes**: v1.27.4
+- **Kubernetes**: v1.27.12
 - **CRI**: Containerd
 - **CNI**: Kindnet
 
 Install Kubernetes with Containerd CRI with:
 ```bash
-sudo apt-get install git -y
-git clone https://github.com/boanlab/tools.git
-./tools/containerd/install-containerd.sh
+##### -----=[ In ALL clusters ]=----- ####
+$ sudo apt-get install git -y
+$ git clone https://github.com/boanlab/tools.git
+$ ./tools/containers/install-containerd.sh
 
-sudo apt-get update
-sudo apt-get install -y apt-transport-https ca-certificates curl gpg
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.27/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.27/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+$ sudo apt-get update
+$ sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+$ curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.27/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+$ echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.27/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
-sudo sysctl -w net.ipv4.ip_forward=1
-sudo swapoff -a
+$ sudo sysctl -w net.ipv4.ip_forward=1
+$ sudo swapoff -a
 
-sudo apt-get update
-sudo apt-get install -y kubelet kubeadm kubectl
-sudo apt-mark hold kubelet kubeadm kubectl
+$ sudo apt-get update
+$ sudo apt-get install -y kubelet kubeadm kubectl
+$ sudo apt-mark hold kubelet kubeadm kubectl
 ```
 Setup config.yaml for each clusters. Refer to following yaml files for information:
 
@@ -55,7 +56,7 @@ Setup config.yaml for each clusters. Refer to following yaml files for informati
     apiVersion: kubeadm.k8s.io/v1beta3
     kind: ClusterConfiguration
     networking:
-      podSubnet: "10.120.0.0/16" 
+      podSubnet: "10.120.0.0/16"
     clusterName: "mgmt"
   ```
 </details>
@@ -96,17 +97,24 @@ Setup config.yaml for each clusters. Refer to following yaml files for informati
   ```
 </details>
 
-Initialize kubeadm using:
+Initialize kubeadm as follows:
 ```bash
-sudo kubeadm init --config=config.yaml --upload-certs
-kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+##### -----=[ In ALL clusters ]=----- ####
+$ sudo modprobe br_netfilter
+$ sudo bash -c 'echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables'
+$ sudo kubeadm init --config=config.yaml --upload-certs
+$ mkdir -p $HOME/.kube
+$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+$ kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ```
 > We are going to taint master node so that Pods can be provisioned in the master node as well (single node setting)
 
-Then, install Kindnet as CNI by:
+Then, install Kindnet CNI as follows:
 ```bash
-kubectl create -f https://raw.githubusercontent.com/aojea/kindnet/master/install-kindnet.yaml
-kubectl get nodes
+##### -----=[ In ALL clusters ]=----- ####
+$ kubectl create -f https://raw.githubusercontent.com/aojea/kindnet/master/install-kindnet.yaml
+$ kubectl get nodes
 NAME   STATUS   ROLES           AGE    VERSION
 np-m   Ready    control-plane   7d1h   v1.27.12
 ```
@@ -115,59 +123,51 @@ np-m   Ready    control-plane   7d1h   v1.27.12
 > Nephio utilizes Ansible and kpt to deploy its packages, so make all 4 machines be able to perform `sudo` without password prompt.
 > Install all packages in all 4 machines
 
-Install KPT by:
+Install KPT as follows:
 ```bash
-wget https://github.com/GoogleContainerTools/kpt/releases/download/v1.0.0-beta.44/kpt_linux_amd64
-mv kpt_linux_amd64 kpt
-chmod +x kpt
-sudo mv ./kpt /usr/bin/
-kpt version
+##### -----=[ In ALL clusters ]=----- ####
+$ wget https://github.com/GoogleContainerTools/kpt/releases/download/v1.0.0-beta.44/kpt_linux_amd64
+$ mv kpt_linux_amd64 kpt
+$ chmod +x kpt
+$ sudo mv ./kpt /usr/bin/
+$ kpt version
 ```
 
-Install porchctl by:
+Install porchctl as follows:
 ```bash
-wget https://github.com/nephio-project/porch/releases/download/v2.0.0/porchctl_2.0.0_linux_amd64.tar.gz
-tar xvfz ./porchctl_2.0.0_linux_amd64.tar.gz 
-sudo mv porchctl /usr/bin
-porchctl version
+##### -----=[ In ALL clusters ]=----- ####
+$ wget https://github.com/nephio-project/porch/releases/download/v2.0.0/porchctl_2.0.0_linux_amd64.tar.gz
+$ tar xvfz ./porchctl_2.0.0_linux_amd64.tar.gz 
+$ sudo mv porchctl /usr/bin
+$ porchctl version
 ```
 
-Install Docker by:
+Install Docker as follows:
 ```bash
-./tools/containers/install-docker.sh
+##### -----=[ In ALL clusters ]=----- ####
+$ ./tools/containers/install-docker.sh
 ```
 
-Also, for future network SDN connection across clusters, we will be using OVS. So install OVS by:
+Also, for future network SDN connection across clusters, we will be using OVS. So install OVS as follows:
 ```bash
-sudo apt-get install openvswitch-switch -y  # for ovs-vsctl
-sudo apt-get install net-tools -y  # for ifconfig
+##### -----=[ In ALL clusters ]=----- ####
+$ sudo apt-get install openvswitch-switch -y  # for ovs-vsctl
+$ sudo apt-get install net-tools -y  # for ifconfig
 ```
 
-For worker nodes, install gtp5g which is a Kernel module for 5G:
+For worker clusters, install gtp5g which is a Kernel module for 5G:
 ```bash
-##### -----=[ In ALL Worker clusters ]=----- ####
-wget https://github.com/free5gc/gtp5g/archive/refs/tags/v0.8.3.tar.gz
-tar xvfz v0.8.3.tar.gz
-cd gtp5g-0.8.3/
-sudo make install
-```
-
-For worker nodes, install some more packages by:
-```bash
-##### -----=[ In ALL Worker clusters ]=----- ####
-kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/nephio/core/workload-crds@main
-kpt fn render workload-crds
-kpt live init workload-crds
-kpt live apply workload-crds --reconcile-timeout=15m --output=table
-
-kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/infra/capi/multus@main
-kpt fn render multus
-kpt live init multus
-kpt live apply multus --reconcile-timeout=15m --output=table
+##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
+$ wget https://github.com/free5gc/gtp5g/archive/refs/tags/v0.8.3.tar.gz
+$ tar xvfz v0.8.3.tar.gz
+$ cd gtp5g-0.8.3/
+$ sudo apt-get install gcc make
+$ sudo make
+$ sudo make install
 ```
 
 ### 1.5 Prepare Nephio
-Nephio utilizes `gitea` and `gitea` utilizes 2 local path PVs. Therefore, create a PV with:
+Nephio utilizes `gitea` and `gitea` utilizes 2 local path PVs. Therefore, Create pv in `mgmt` cluster as follows:
 ```yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -197,54 +197,60 @@ spec:
   hostPath:
     path: /home/boan/nephio/gitea/data-gitea-postgresql-0
 ```
+After save codes, apply it
+```bash
+##### -----=[ In mgmt cluster ]=----- ####
+$ kubectl apply -f gitea-pv.yaml
+```
 
 ## 2. Initialize Nephio
 > **IMPORTANT:** Perform this in `mgmt` cluster.
 
 Git clone test-infra which has Ansible playbook that deploys Nephio. The original Nephio's test-infra cannot provision without Kind, so we have removed KinD by force. Change workdir to home directory and start initializing `init.sh`.
-```
-cd ~
-git clone https://github.com/boanlab/nephio-test-infra.git test-infra
-export NEPHIO_USER=$USER
-export ANSIBLE_CMD_EXTRA_VAR_LIST="k8s.context=kubernetes-admin@mgmt kind.enabled=false host_min_vcpu=4 host_min_cpu_ram=8"
-sudo -E ./test-infra/e2e/provision/init.sh
+```bash
+$ cd ~
+$ git clone https://github.com/boanlab/nephio-test-infra.git test-infra
+$ export NEPHIO_USER=$USER
+$ export ANSIBLE_CMD_EXTRA_VAR_LIST="k8s.context=kubernetes-admin@mgmt kind.enabled=false host_min_vcpu=4 host_min_cpu_ram=8"
+$ sudo -E ./test-infra/e2e/provision/init.sh
 ```
 
 The installation sequence normally takes around 20 ~ 30 minutes, keep monitoring namespaces by:
-```
-watch -n 1 kubectl get ns
+```bash
+$ watch -n 1 kubectl get ns
 ```
 
 Once the `gitea/gitea-0` and `gitea/gitea-postgresql-0` starts in Nephio, we need to perform:
 ```bash
-chmod 777 /home/boan/nephio -R
+$ sudo chmod 777 /home/boan/nephio -R
 ```
 Otherwilse, the Nephio will get stuck while installing.
 
 ## 3. Adding K8s Clusters to Nephio
 ### 3.1 Registering Clusters to Nephio
-Once step 2 was finished **without any errors**, add `regional` cluster to Nephio by:
+Once step 2 was finished **without any errors**, add `regional` cluster to Nephio as follows:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-kubectl get repositories
-porchctl rpkg get --name nephio-workload-cluster
-porchctl rpkg clone -n default catalog-infra-capi-b0ae9512aab3de73bbae623a3b554ade57e15596 --repository mgmt regional
-porchctl rpkg pull -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868 regional
-kpt fn eval --image gcr.io/kpt-fn/set-labels:v0.2.0 regional -- "nephio.org/site-type=regional" "nephio.org/region=us-west1"
-porchctl rpkg push -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868 regional
-porchctl rpkg propose -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868
-porchctl rpkg approve -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868
+$ kubectl get repositories
+$ porchctl rpkg get --name nephio-workload-cluster
+$ porchctl rpkg clone -n default catalog-infra-capi-b0ae9512aab3de73bbae623a3b554ade57e15596 --repository mgmt regional
+$ porchctl rpkg pull -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868 regional
+$ kpt fn eval --image gcr.io/kpt-fn/set-labels:v0.2.0 regional -- "nephio.org/site-type=regional" "nephio.org/region=us-west1"
+$ porchctl rpkg push -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868 regional
+$ porchctl rpkg propose -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868
+$ porchctl rpkg approve -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868
 ```
 
-This will create draft `regional` to `gitea`. Then add `edge01` and `edge02` clusters to Nephio by:
+This will create draft `regional` to `gitea`. Then add `edge01` and `edge02` clusters to Nephio as follows:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-kubectl apply -f test-infra/e2e/tests/free5gc/002-edge-clusters.yaml
+$ kubectl apply -f test-infra/e2e/tests/free5gc/002-edge-clusters.yaml
 ```
 
-Then after a bit of time, check for repositories registered in Nephio by
-```
-kubectl get repositories
+Then after a bit of time, check for repositories registered in Nephio as follows
+```bash
+$ kubectl get repositories
+
 NAME                        TYPE   CONTENT   DEPLOYMENT   READY   ADDRESS
 ...
 edge01                      git    Package   true         False    http://172.18.0.200:3000/nephio/edge01.git
@@ -280,7 +286,7 @@ spec:
   git:
     branch: main
     directory: /
-    repo: http://10.10.0.131:3000/nephio/regional.git
+    repo: http://10.10.0.131:3000/nephio/regional.git # change gitea repo ip address
     secretRef:
       name: regional-access-token-porch
   type: git
@@ -289,6 +295,7 @@ spec:
 Once you have committed the change, the porch-system which is running in `mgmt` cluster will notice that the repositories were changed. This might take a little bit of time, in some time later, check the repositories registered in Nephio by:
 ```bash
 $ kubectl get repositories
+
 NAME                        TYPE   CONTENT   DEPLOYMENT   READY   ADDRESS
 ...
 edge01                      git    Package   true         True    http://10.10.0.131:3000/nephio/edge01.git
@@ -303,6 +310,7 @@ If the addresses were changed to the designated gitea service's IP, the `READY` 
 In order for regional, edge clusters to join Nephio, they require `secrets` to gain access to `mgmt` cluster's gitea service. The secrets are automatically generated in step 3.1. You can check them by:
 ```bash
 $ kubectl get secrets --all-namespaces
+
 NAMESPACE                           NAME                                              TYPE                       DATA   AGE
 ...
 default                             edge01-access-token-configsync                    kubernetes.io/basic-auth   3      6d21h
@@ -321,10 +329,10 @@ Look for secrets:
 
 The clusters need to have those secrets registered in their clusters. This means, for example, if `regional` cluster was to gain access to `mgmt`'s gitea service, the `regional` shall also have the `regional-access-token-configsync`. This can be achieved by
 
-```
+```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-kubectl get secret regional-access-token-configsync -o yaml > regional-secret.yaml
-scp regional-secret.yaml boan@10.10.0.121:/home/boan
+$ kubectl get secret regional-access-token-configsync -o yaml > regional-secret.yaml
+$ scp regional-secret.yaml [regional_machine_userid]@[regional_machines_ip]:/home/[regional_machine_userid]
 ```
 
 This will export the secret to regional cluster as `regional-secret.yaml`. In the destination cluster, in this case `regional`, modify a bit of the secret.
@@ -338,7 +346,7 @@ kind: Secret
 ...
   creationTimestamp: "2024-04-08T07:01:41Z"
   name: regional-access-token-configsync
-  namespace: config-management-system
+  namespace: config-management-system # change here, default -> config-management-system
   ownerReferences:
 ...
 ```
@@ -347,23 +355,30 @@ Change the namespace of the token to `config-management-system` from `default`. 
 - `config-management-system/edge01-access-token-configsync` in `edge01` cluster
 - `config-management-system/edge02-access-token-configsync` in `edge02` cluster
 
-Then, install `configsync` and `rootsync` in the clusters joining Nephio by:
+But before apply secrets, install `configsync` in the clusters joining Nephio as follows:
 ```bash
-##### -----=[ In ALL Worker clusters ]=----- ####
-kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/nephio/core/configsync@main
-kpt fn render configsync
-kpt live init configsync
-kpt live apply configsync --reconcile-timeout=15m --output=table
+##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
+$ kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/nephio/core/configsync@main
+$ kpt fn render configsync
+$ kpt live init configsync
+$ kpt live apply configsync --reconcile-timeout=15m --output=table
 
-kpt pkg get https://github.com/nephio-project/catalog.git/nephio/optional/rootsync@main
+$ kpt pkg get https://github.com/nephio-project/catalog.git/nephio/optional/rootsync@main
 ```
 
-This will automatically install `configsync`. However, in order for `rootsync` to know the target gitea service that the cluster needs to access, we need to modify `rootsync/rootsync.yaml` Refer to the following rootsync for detailed informaton:
+This will automatically install `configsync`. and next, apply secrets in clusters
+```bash
+##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
+$ kubectl apply -f regional-secret.yaml  # edge01-secret.yaml, edge02-secret.yaml in other clusters
+```
+
+After apply secrets, we need to install `rootsync` in the clusters joining Nephio. 
+in order for `rootsync` to know the target gitea service that the cluster needs to access, we need to modify `rootsync/rootsync.yaml` Refer to the following rootsync for detailed informaton:
 
 <details>
   <summary>regional rootsync.yaml</summary>
   
-  ``` yaml
+``` yaml
 apiVersion: configsync.gke.io/v1beta1
 kind: RootSync
 metadata: # kpt-merge: config-management-system/regional
@@ -374,7 +389,7 @@ metadata: # kpt-merge: config-management-system/regional
 spec:
   sourceFormat: unstructured
   git:
-    repo: http://10.10.0.120:3000/nephio/regional.git
+    repo: http://10.10.0.120:3000/nephio/regional.git # change gitea repo ip address
     branch: main
     auth: token
     secretRef:
@@ -385,7 +400,7 @@ spec:
 <details>
   <summary>edge01 rootsync.yaml</summary>
   
-  ``` yaml
+``` yaml
 apiVersion: configsync.gke.io/v1beta1
 kind: RootSync
 metadata: # kpt-merge: config-management-system/edge01
@@ -396,7 +411,7 @@ metadata: # kpt-merge: config-management-system/edge01
 spec:
   sourceFormat: unstructured
   git:
-    repo: http://10.10.0.131:3000/nephio/edge01.git
+    repo: http://10.10.0.131:3000/nephio/edge01.git # change gitea repo ip address
     branch: main
     auth: token
     secretRef:
@@ -407,7 +422,7 @@ spec:
 <details>
   <summary>edge02 rootsync.yaml</summary>
   
-  ``` yaml
+``` yaml
 apiVersion: configsync.gke.io/v1beta1
 kind: RootSync
 metadata: # kpt-merge: config-management-system/edge02
@@ -418,7 +433,7 @@ metadata: # kpt-merge: config-management-system/edge02
 spec:
   sourceFormat: unstructured
   git:
-    repo: http://10.10.0.131:3000/nephio/edge02.git
+    repo: http://10.10.0.131:3000/nephio/edge02.git # change gitea repo ip address
     branch: main
     auth: token
     secretRef:
@@ -428,14 +443,16 @@ spec:
 
 Once the rootsync/rootsync files were modified, install rootsync by:
 ```bash
-##### -----=[ In ALL Worker clusters ]=----- ####
+##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
 kpt live init rootsync
 kpt live apply rootsync --reconcile-timeout=15m --output=table
 ```
 
 This might fail one time, try again. If the problem proceeds, check for the error message and make sure the secrets are registered in respective clusters properly. If you see `root-reconciler` the namespace `config-management-system` like below, this is working as intended.
 
-```$ kubectl get pods -n config-management-system
+``` bash
+$ kubectl get pods -n config-management-system
+
 NAME                                          READY   STATUS    RESTARTS       AGE
 config-management-operator-6946b77565-wxwvd   1/1     Running   0              6d20h
 reconciler-manager-5b5d8557-wf69f             2/2     Running   0              6d20h
@@ -444,7 +461,8 @@ root-reconciler-regional-79949ff68-r5jvs      4/4     Running   87 (78m ago)   6
 
 Also, check if `root-reconciler` can actually access the gitea properly by:
 ```bash
-kubectl logs -n config-management-system root-reconciler-regional-79949ff68-r5jvs -c git-sync
+$ kubectl logs -n config-management-system root-reconciler-regional-79949ff68-r5jvs -c git-sync
+
 INFO: detected pid 1, running init handler
 I0415 04:31:40.264048      12 main.go:1101] "level"=1 "msg"="setting up git credential store"
 ...
@@ -492,7 +510,7 @@ topology:
 This will deploy a SR Linux having `e1-1`, `e1-2`, `e1-3` and those are connected to host's `sr-r`, `'sr-e1` and `sr-e1`. Also, we are going to connect each interfaces to a ovs tunnel that is connected to the remote server using VXLAN. Deploy containerlab using
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-sudo containerlab deploy --topo topology.yaml
+$ sudo containerlab deploy --topo topology.yaml
 ```
 
 So for example, it will be something like:
@@ -503,77 +521,68 @@ leaf -- e1-1(veth) -- sr-r(veth) -- br-tun-r(ovs) -- vxlan0 -- VXLAN -- vxlan0 -
 Create OVS bridge in mgmt cluster by:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-sudo ovs-vsctl add-br br-tun-r
-sudo ovs-vsctl add-br br-tun-e1
-sudo ovs-vsctl add-br br-tun-e2
+$ sudo ovs-vsctl add-br br-tun-r
+$ sudo ovs-vsctl add-br br-tun-e1
+$ sudo ovs-vsctl add-br br-tun-e2
 
-sudo ifconfig br-tun-r up
-sudo ifconfig br-tun-e1 up
-sudo ifconfig br-tun-e2 up
+$ sudo ifconfig br-tun-r up
+$ sudo ifconfig br-tun-e1 up
+$ sudo ifconfig br-tun-e2 up
 ```
 
 Then prepare to connect vxlans in mgmt cluster by
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.121 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48317 options:tag=321
-sudo ovs-vsctl add-port br-tun-e1 vxlan1 -- set interface vxlan1 type=vxlan options:remote_ip=10.10.0.122 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48318 options:tag=321
-sudo ovs-vsctl add-port br-tun-e2 vxlan2 -- set interface vxlan2 type=vxlan options:remote_ip=10.10.0.123 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48319 options:tag=321
+$ sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.121 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48317 options:tag=321
+$ sudo ovs-vsctl add-port br-tun-e1 vxlan1 -- set interface vxlan1 type=vxlan options:remote_ip=10.10.0.122 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48318 options:tag=321
+$ sudo ovs-vsctl add-port br-tun-e2 vxlan2 -- set interface vxlan2 type=vxlan options:remote_ip=10.10.0.123 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48319 options:tag=321
 ```
 
 ## 4.2 Setup OVS - `edge01`, `edge02` and `regional`
 Then in each worker clusters, connect the otherpart by:
 ```bash
 ##### -----=[ In regional cluster ]=----- ####
-sudo ovs-vsctl add-br eth1
-sudo ifconfig eth1 up
-sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48317 options:tag=321
+$ sudo ovs-vsctl add-br eth1
+$ sudo ifconfig eth1 up
+$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48317 options:tag=321
 ```
 
 ```bash
 ##### -----=[ In edge01 cluster ]=----- ####
-sudo ovs-vsctl add-br eth1
-sudo ifconfig eth1 up
-sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48318 options:tag=321
+$ sudo ovs-vsctl add-br eth1
+$ sudo ifconfig eth1 up
+$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48318 options:tag=321
 ```
 
 ```bash
 ##### -----=[ In edge02 cluster ]=----- ####
-sudo ovs-vsctl add-br eth1
-sudo ifconfig eth1 up
-sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48319 options:tag=321
+$ sudo ovs-vsctl add-br eth1
+$ sudo ifconfig eth1 up
+$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48319 options:tag=321
 ```
 
 Also, create interfaces for `eth1.2` ~ `eth1.6`. These interfaces will be later connected to n3, n4, n6. Those interfaces will be connected to `eth1` OVS bridge in each worker nodes. So perform:
 ```bash
-##### -----=[ In ALL Worker clusters ]=----- ####
-sudo ip link add eth1.2 type veth peer name eth1.2-br
-sudo ip link add eth1.3 type veth peer name eth1.3-br
-sudo ip link add eth1.4 type veth peer name eth1.4-br
-sudo ip link add eth1.5 type veth peer name eth1.5-br
-sudo ip link add eth1.6 type veth peer name eth1.6-br
+##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
+$ sudo ip link add eth1.2 type veth peer name eth1.2-br
+$ sudo ip link add eth1.3 type veth peer name eth1.3-br
+$ sudo ip link add eth1.4 type veth peer name eth1.4-br
+$ sudo ip link add eth1.5 type veth peer name eth1.5-br
+$ sudo ip link add eth1.6 type veth peer name eth1.6-br
 
-sudo ovs-vsctl add-port eth1 eth1.2-br
-sudo ovs-vsctl add-port eth1 eth1.3-br
-sudo ovs-vsctl add-port eth1 eth1.4-br
-sudo ovs-vsctl add-port eth1 eth1.5-br
-sudo ovs-vsctl add-port eth1 eth1.6-br
-```
-
-Till now, we have actually setup the connection. This corresponds to 
-```bash
-export E2EDIR=${E2EDIR:-$HOME/test-infra/e2e}
-export LIBDIR=${LIBDIR:-$HOME/test-infra/e2e/lib}
-export TESTDIR=${TESTDIR:-$HOME/test-infra/e2e/tests/free5gc}
-./test-infra/e2e/provision/hacks/inter-connect_workers.sh
-./test-infra/e2e/provision/hacks/vlan-interfaces.sh
+$ sudo ovs-vsctl add-port eth1 eth1.2-br
+$ sudo ovs-vsctl add-port eth1 eth1.3-br
+$ sudo ovs-vsctl add-port eth1 eth1.4-br
+$ sudo ovs-vsctl add-port eth1 eth1.5-br
+$ sudo ovs-vsctl add-port eth1 eth1.6-br
 ```
 
 ## 4.3 Apply Nephio Networks
 Then apply the network settings to Nephio by:
-```
+```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-kubectl apply -f test-infra/e2e/tests/free5gc/002-network.yaml
-kubectl apply -f test-infra/e2e/tests/free5gc/002-secret.yaml
+$ kubectl apply -f test-infra/e2e/tests/free5gc/002-network.yaml
+$ kubectl apply -f test-infra/e2e/tests/free5gc/002-secret.yaml
 ```
 
 Also, we have to setup RawTopology as well. An example is like below:
@@ -619,9 +628,9 @@ kubectl create -f topo.yaml
 ```
 
 # 5. Deploying Free5gc-cp
-Now, deploy Free5gc-CP as usual: https://docs.nephio.org/docs/guides/user-guides/exercise-1-free5gc/#step-4-deploy-free5gc-control-plane-functions. The Nephio webui will be running in `10.10.0.132:7007`. 
+Now, deploy Free5gc-CP as usual: https://docs.nephio.org/docs/guides/user-guides/exercise-1-free5gc/#step-4-deploy-free5gc-control-plane-functions. The Nephio webui will be running in `10.10.0.132:7007` (for example). 
 
-The regional cluster utilizes host path PV to store data for `mongodb`. Create a new PV in `mgmt` cluster by:
+The regional cluster utilizes host path PV to store data for `mongodb`. Create a new PV in `regional` cluster by:
 ```yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -646,9 +655,22 @@ kubectl create -f mongodb-pv.yaml
 
 > Also, just like the `gitea` PVs in `mgmt` cluster, we need to manually `chmod` the local directory. Otherwise, the `mongodb` will not setup.
 > ```bash
-> sudo chmod 777 -R /home/boan/nephio/mongodb
+> $ sudo chmod 777 -R /home/boan/nephio/mongodb
 > ```
 
+For worker culsters, install some more packages by:
+```bash
+##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
+$ kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/nephio/core/workload-crds@main
+$ kpt fn render workload-crds
+$ kpt live init workload-crds
+$ kpt live apply workload-crds --reconcile-timeout=15m --output=table
+
+$ kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/infra/capi/multus@main
+$ kpt fn render multus
+$ kpt live init multus
+$ kpt live apply multus --reconcile-timeout=15m --output=table
+```
 
 Then deploy free5gc operators using the following command:
 ```bash
@@ -662,12 +684,11 @@ This will deploy
 
 # 6. Deploying UPF, AMF and SMF
 Once Free5gc-CP was setup properly, you can pretty much deploy other UPF, AMF and SMF as usual by:
-
-```
+```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-kubectl apply -f test-infra/e2e/tests/free5gc/005-edge-free5gc-upf.yaml
-kubectl apply -f test-infra/e2e/tests/free5gc/006-regional-free5gc-amf.yaml
-kubectl apply -f test-infra/e2e/tests/free5gc/006-regional-free5gc-smf.yaml
+$ kubectl apply -f test-infra/e2e/tests/free5gc/005-edge-free5gc-upf.yaml
+$ kubectl apply -f test-infra/e2e/tests/free5gc/006-regional-free5gc-amf.yaml
+$ kubectl apply -f test-infra/e2e/tests/free5gc/006-regional-free5gc-smf.yaml
 ```
 - TBD
 
