@@ -451,6 +451,7 @@ kpt live apply rootsync --reconcile-timeout=15m --output=table
 This might fail one time, try again. If the problem proceeds, check for the error message and make sure the secrets are registered in respective clusters properly. If you see `root-reconciler` the namespace `config-management-system` like below, this is working as intended.
 
 ``` bash
+##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
 $ kubectl get pods -n config-management-system
 
 NAME                                          READY   STATUS    RESTARTS       AGE
@@ -461,6 +462,7 @@ root-reconciler-regional-79949ff68-r5jvs      4/4     Running   87 (78m ago)   6
 
 Also, check if `root-reconciler` can actually access the gitea properly by:
 ```bash
+##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
 $ kubectl logs -n config-management-system root-reconciler-regional-79949ff68-r5jvs -c git-sync
 
 INFO: detected pid 1, running init handler
