@@ -1,7 +1,7 @@
 # nephio-setup
 This document demonstrates the installation guide for Nephio R2 and [Free5CP demo](https://docs.nephio.org/docs/guides/user-guides/exercise-1-free5gc/).
 
-## Table of Contents
+# Table of Contents
 1. Prerequsites
 2. Initialize Nephio
 3. Adding K8s Clusters to Nephio
@@ -208,6 +208,7 @@ $ kubectl apply -f gitea-pv.yaml
 
 Git clone test-infra which has Ansible playbook that deploys Nephio. The original Nephio's test-infra cannot provision without Kind, so we have removed KinD by force. Change workdir to home directory and start initializing `init.sh`.
 ```bash
+##### -----=[ In mgmt cluster ]=----- ####
 $ cd ~
 $ git clone https://github.com/boanlab/nephio-test-infra.git test-infra
 $ export NEPHIO_USER=$USER
@@ -249,6 +250,7 @@ $ kubectl apply -f test-infra/e2e/tests/free5gc/002-edge-clusters.yaml
 
 Then after a bit of time, check for repositories registered in Nephio as follows
 ```bash
+##### -----=[ In mgmt cluster ]=----- ####
 $ kubectl get repositories
 
 NAME                        TYPE   CONTENT   DEPLOYMENT   READY   ADDRESS
@@ -294,6 +296,7 @@ spec:
 
 Once you have committed the change, the porch-system which is running in `mgmt` cluster will notice that the repositories were changed. This might take a little bit of time, in some time later, check the repositories registered in Nephio by:
 ```bash
+##### -----=[ In mgmt cluster ]=----- ####
 $ kubectl get repositories
 
 NAME                        TYPE   CONTENT   DEPLOYMENT   READY   ADDRESS
@@ -309,6 +312,7 @@ If the addresses were changed to the designated gitea service's IP, the `READY` 
 ### 3.2 Clusters Joining Nephio
 In order for regional, edge clusters to join Nephio, they require `secrets` to gain access to `mgmt` cluster's gitea service. The secrets are automatically generated in step 3.1. You can check them by:
 ```bash
+##### -----=[ In mgmt cluster ]=----- ####
 $ kubectl get secrets --all-namespaces
 
 NAMESPACE                           NAME                                              TYPE                       DATA   AGE
@@ -332,7 +336,7 @@ The clusters need to have those secrets registered in their clusters. This means
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 $ kubectl get secret regional-access-token-configsync -o yaml > regional-secret.yaml
-$ scp regional-secret.yaml [regional_machine_userid]@[regional_machines_ip]:/home/[regional_machine_userid]
+$ scp regional-secret.yaml boan@10.10.0.120:/home/boan # change mgmt cluster machine's username, homepath, ip address 
 ```
 
 This will export the secret to regional cluster as `regional-secret.yaml`. In the destination cluster, in this case `regional`, modify a bit of the secret.
@@ -484,10 +488,12 @@ I0415 05:50:46.232790      12 main.go:585] "level"=1 "msg"="next sync" "wait_tim
 
 If you seen all `edge01`, `edge02` and `regional` clusters having proper git-sync, you can proceed to to the Step 4.
 
-# 4. Configure Network Topology
+## 4. Configure Network Topology
 Nephio utilizes SR Linux to interconnect clusters. However, since we are using multiple servers, we need to connect them as if they were connected. Therefore, we will be using OVS to connect between SR Linux to each clusters.
 
-## 4.1 Setup Containerlab - `mgmt`
+### 4.1 Setup Containerlab
+> **IMPORTANT:** Perform this in `mgmt` cluster.
+
 Create a network topology file as follows:
 ```yaml
 name: 5g
@@ -509,7 +515,7 @@ topology:
     - endpoints: ["leaf:e1-3", "host:sr-e2"]
 ```
 
-This will deploy a SR Linux having `e1-1`, `e1-2`, `e1-3` and those are connected to host's `sr-r`, `'sr-e1` and `sr-e1`. Also, we are going to connect each interfaces to a ovs tunnel that is connected to the remote server using VXLAN. Deploy containerlab using
+This will deploy a SR Linux having `e1-1`, `e1-2`, `e1-3` and those are connected to host's `sr-r`, `'sr-e1` and `sr-e1`. Also, we are going to connect each interfaces to a ovs tunnel that is connected to the remote server using VXLAN. Deploy containerlab using codes
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 $ sudo containerlab deploy --topo topology.yaml
@@ -532,7 +538,7 @@ $ sudo ifconfig br-tun-e1 up
 $ sudo ifconfig br-tun-e2 up
 ```
 
-Then prepare to connect vxlans in mgmt cluster by
+Then prepare to connect vxlans in mgmt cluster by:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 $ sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.121 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48317 options:tag=321
@@ -540,27 +546,29 @@ $ sudo ovs-vsctl add-port br-tun-e1 vxlan1 -- set interface vxlan1 type=vxlan op
 $ sudo ovs-vsctl add-port br-tun-e2 vxlan2 -- set interface vxlan2 type=vxlan options:remote_ip=10.10.0.123 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48319 options:tag=321
 ```
 
-## 4.2 Setup OVS - `edge01`, `edge02` and `regional`
+### 4.2 Setup OVS
+> **IMPORTANT:** Perform this in `regional`, `edge01`, `edge02` cluster.
+
 Then in each worker clusters, connect the otherpart by:
 ```bash
 ##### -----=[ In regional cluster ]=----- ####
 $ sudo ovs-vsctl add-br eth1
 $ sudo ifconfig eth1 up
-$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48317 options:tag=321
+$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48317 options:tag=321 # change remote ip to mgmt cluster machine's ip
 ```
 
 ```bash
 ##### -----=[ In edge01 cluster ]=----- ####
 $ sudo ovs-vsctl add-br eth1
 $ sudo ifconfig eth1 up
-$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48318 options:tag=321
+$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48318 options:tag=321 # change remote ip to mgmt cluster machine's ip
 ```
 
 ```bash
 ##### -----=[ In edge02 cluster ]=----- ####
 $ sudo ovs-vsctl add-br eth1
 $ sudo ifconfig eth1 up
-$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48319 options:tag=321
+$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48319 options:tag=321 # change remote ip to mgmt cluster machine's ip
 ```
 
 Also, create interfaces for `eth1.2` ~ `eth1.6`. These interfaces will be later connected to n3, n4, n6. Those interfaces will be connected to `eth1` OVS bridge in each worker nodes. So perform:
@@ -579,15 +587,15 @@ $ sudo ovs-vsctl add-port eth1 eth1.5-br
 $ sudo ovs-vsctl add-port eth1 eth1.6-br
 ```
 
-## 4.3 Apply Nephio Networks
-Then apply the network settings to Nephio by:
+### 4.3 Apply Nephio Networks
+Then apply the network settings to Nephio as follows:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 $ kubectl apply -f test-infra/e2e/tests/free5gc/002-network.yaml
 $ kubectl apply -f test-infra/e2e/tests/free5gc/002-secret.yaml
 ```
 
-Also, we have to setup RawTopology as well. An example is like below:
+Also, we have to setup RawTopology as well. An example as follows:
 ```yaml
 apiVersion: topo.nephio.org/v1alpha1
 kind: RawTopology
@@ -630,7 +638,7 @@ Be aware that the srl.address shall be provided as the `mgmt` cluster's SR Linux
 $ kubectl create -f topo.yaml
 ```
 
-# 5. Deploying Free5gc-cp
+## 5. Deploying Free5gc-cp
 Now, deploy Free5gc-CP as usual: https://docs.nephio.org/docs/guides/user-guides/exercise-1-free5gc/#step-4-deploy-free5gc-control-plane-functions. The Nephio webui will be running in `10.10.0.132:7007` (for example). 
 
 The regional cluster utilizes host path PV to store data for `mongodb`. Create a new PV in `regional` cluster by:
@@ -650,16 +658,16 @@ spec:
     path: /home/boan/nephio/mongodb/
 ```
 
-Then
+Then apply pv files as follows:
 ```bash
 ##### -----=[ In regional cluster ]=----- ####
-$ kubectl create -f mongodb-pv.yaml
+$ kubectl apply -f mongodb-pv.yaml
 ```
 
-> Also, just like the `gitea` PVs in `mgmt` cluster, we need to manually `chmod` the local directory. Otherwise, the `mongodb` will not setup.
-> ```bash
-> $ sudo chmod 777 -R /home/boan/nephio/mongodb
-> ```
+Also, just like the `gitea` PVs in `mgmt` cluster, we need to manually `chmod` the local directory. Otherwise, the `mongodb` will not setup.
+```bash
+$ sudo chmod 777 -R /home/boan/nephio/mongodb
+ ```
 
 For worker culsters, install some more packages by:
 ```bash
@@ -685,8 +693,8 @@ This will deploy
 - `free5gc/free5gc-operator` pods in `edge01`, `edge02` and `regional` clusters.
 - `free5gc-cp/free5gc-NFV` pods in `regional` cluster. Ex) `free5gc-ausf`, `nrf`, `nssf`,` pcf`, `udm`, etc.
 
-# 6. Deploying UPF, AMF and SMF
-Once Free5gc-CP was setup properly, you can pretty much deploy other UPF, AMF and SMF as usual by:
+## 6. Deploying UPF, AMF and SMF
+Once Free5gc-CP was setup properly, you can pretty much deploy other `UPF`, `AMF` and `SMF` as usual by:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 $ kubectl apply -f test-infra/e2e/tests/free5gc/005-edge-free5gc-upf.yaml
@@ -695,5 +703,5 @@ $ kubectl apply -f test-infra/e2e/tests/free5gc/006-regional-free5gc-smf.yaml
 ```
 - TBD
 
-# 7. Deploying UERANSIM
+## 7. Deploying UERANSIM
 - TBD
