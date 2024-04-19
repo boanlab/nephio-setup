@@ -10,8 +10,8 @@ This document demonstrates the installation guide for Nephio R2 and [Free5CP dem
 6. Deploying UPF, AMF and SMF
 7. Deploying UERANSIM
 
-## 1. Prerequsites
-### 1.1 Servers
+# 1. Prerequsites
+## 1.1 Servers
 The environment will utilize 4 servers:
 > Official Nephio GCP utilizes single server with 8 vCPU and 8GB RAM. However, for our purpose, we will be using extra resources. In the case of the IP address, you must configure it by changing it to the IP of the installation environment.
 
@@ -22,7 +22,7 @@ The environment will utilize 4 servers:
 |Edge01 Cluster|8 vCPU / 8GB RAM | `edge01` | 10.10.0.122 | 10.122.0.0/16 |
 |Edge02 Cluster|8 vCPU / 8GB RAM | `edge02` | 10.10.0.123 | 10.123.0.0/16 |
 
-### 1.2 Kubernetes
+## 1.2 Install kubernetes
 The official environment provisions Kubernetes with KinD. To have as similar environment as possible, we will be using:
 - **Kubernetes**: v1.27.12
 - **CRI**: Containerd
@@ -119,7 +119,7 @@ NAME   STATUS   ROLES           AGE    VERSION
 np-m   Ready    control-plane   7d1h   v1.27.12
 ```
 
-### 1.4 Install Packages
+## 1.3 Install Packages
 > Nephio utilizes Ansible and kpt to deploy its packages, so make all 4 machines be able to perform `sudo` without password prompt.
 > Install all packages in all 4 machines
 
@@ -166,7 +166,7 @@ $ sudo make
 $ sudo make install
 ```
 
-### 1.5 Prepare Nephio
+## 1.4 Prepare Nephio
 Nephio utilizes `gitea` and `gitea` utilizes 2 local path PVs. Therefore, Create pv in `mgmt` cluster as follows:
 ```yaml
 apiVersion: v1
@@ -203,7 +203,7 @@ After save codes, apply it
 $ kubectl apply -f gitea-pv.yaml
 ```
 
-## 2. Initialize Nephio
+# 2. Initialize Nephio
 > **IMPORTANT:** Perform this in `mgmt` cluster.
 
 Git clone test-infra which has Ansible playbook that deploys Nephio. The original Nephio's test-infra cannot provision without Kind, so we have removed KinD by force. Change workdir to home directory and start initializing `init.sh`.
@@ -227,8 +227,8 @@ $ sudo chmod 777 /home/boan/nephio -R
 ```
 Otherwilse, the Nephio will get stuck while installing.
 
-## 3. Adding K8s Clusters to Nephio
-### 3.1 Registering Clusters to Nephio
+# 3. Adding K8s Clusters to Nephio
+## 3.1 Registering Clusters to Nephio
 Once step 2 was finished **without any errors**, add `regional` cluster to Nephio as follows:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
@@ -309,7 +309,7 @@ regional                    git    Package   true         True    http://10.10.0
 ```
 If the addresses were changed to the designated gitea service's IP, the `READY` field will be changed to `True`. If this step was successfully performed, the edge and regional clusters can Join without any problem.
 
-### 3.2 Clusters Joining Nephio
+## 3.2 Clusters Joining Nephio
 In order for regional, edge clusters to join Nephio, they require `secrets` to gain access to `mgmt` cluster's gitea service. The secrets are automatically generated in step 3.1. You can check them by:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
@@ -448,8 +448,8 @@ spec:
 Once the rootsync/rootsync files were modified, install rootsync by:
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
-kpt live init rootsync
-kpt live apply rootsync --reconcile-timeout=15m --output=table
+$ kpt live init rootsync
+$ kpt live apply rootsync --reconcile-timeout=15m --output=table
 ```
 
 This might fail one time, try again. If the problem proceeds, check for the error message and make sure the secrets are registered in respective clusters properly. If you see `root-reconciler` the namespace `config-management-system` like below, this is working as intended.
@@ -482,16 +482,16 @@ I0415 05:50:46.232790      12 main.go:585] "level"=1 "msg"="next sync" "wait_tim
 > If the message keeps coming out as if the target gitea address is not accessable, perform `curl` to the gitea service. If the gitea is stil down, restart the `metallb-system`'s daemonsets in `mgmt` cluster. There are some frequent occurances with the `metallb-system/speaker` daemonset not serving the gitea properly. In this case, restart the daemonset by:
 > ```bash
 > ##### -----=[ In mgmt cluster ]=----- ####
-> kubectl rollout restart daemonsets -n metallb-system
+> $ kubectl rollout restart daemonsets -n metallb-system
 > ```
 > This will solve the issue and make the load balancer IP work again.
 
 If you seen all `edge01`, `edge02` and `regional` clusters having proper git-sync, you can proceed to to the Step 4.
 
-## 4. Configure Network Topology
+# 4. Configure Network Topology
 Nephio utilizes SR Linux to interconnect clusters. However, since we are using multiple servers, we need to connect them as if they were connected. Therefore, we will be using OVS to connect between SR Linux to each clusters.
 
-### 4.1 Setup Containerlab
+## 4.1 Setup Containerlab
 > **IMPORTANT:** Perform this in `mgmt` cluster.
 
 Create a network topology file as follows:
@@ -546,7 +546,7 @@ $ sudo ovs-vsctl add-port br-tun-e1 vxlan1 -- set interface vxlan1 type=vxlan op
 $ sudo ovs-vsctl add-port br-tun-e2 vxlan2 -- set interface vxlan2 type=vxlan options:remote_ip=10.10.0.123 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48319 options:tag=321
 ```
 
-### 4.2 Setup OVS
+## 4.2 Setup OVS
 > **IMPORTANT:** Perform this in `regional`, `edge01`, `edge02` cluster.
 
 Then in each worker clusters, connect the otherpart by:
@@ -587,7 +587,7 @@ $ sudo ovs-vsctl add-port eth1 eth1.5-br
 $ sudo ovs-vsctl add-port eth1 eth1.6-br
 ```
 
-### 4.3 Apply Nephio Networks
+## 4.3 Apply Nephio Networks
 Then apply the network settings to Nephio as follows:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
@@ -638,7 +638,7 @@ Be aware that the srl.address shall be provided as the `mgmt` cluster's SR Linux
 $ kubectl create -f topo.yaml
 ```
 
-## 5. Deploying Free5gc-cp
+# 5. Deploying Free5gc-cp
 Now, deploy Free5gc-CP as usual: https://docs.nephio.org/docs/guides/user-guides/exercise-1-free5gc/#step-4-deploy-free5gc-control-plane-functions. The Nephio webui will be running in `10.10.0.132:7007` (for example). 
 
 The regional cluster utilizes host path PV to store data for `mongodb`. Create a new PV in `regional` cluster by:
@@ -693,7 +693,7 @@ This will deploy
 - `free5gc/free5gc-operator` pods in `edge01`, `edge02` and `regional` clusters.
 - `free5gc-cp/free5gc-NFV` pods in `regional` cluster. Ex) `free5gc-ausf`, `nrf`, `nssf`,` pcf`, `udm`, etc.
 
-## 6. Deploying UPF, AMF and SMF
+# 6. Deploying UPF, AMF and SMF
 Once Free5gc-CP was setup properly, you can pretty much deploy other `UPF`, `AMF` and `SMF` as usual by:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
@@ -703,5 +703,5 @@ $ kubectl apply -f test-infra/e2e/tests/free5gc/006-regional-free5gc-smf.yaml
 ```
 - TBD
 
-## 7. Deploying UERANSIM
+# 7. Deploying UERANSIM
 - TBD
