@@ -518,6 +518,7 @@ topology:
 This will deploy a SR Linux having `e1-1`, `e1-2`, `e1-3` and those are connected to host's `sr-r`, `'sr-e1` and `sr-e1`. Also, we are going to connect each interfaces to a ovs tunnel that is connected to the remote server using VXLAN. Deploy containerlab using codes
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
+$ docker pull ghcr.io/nokia/srlinux:22.11.2-116
 $ sudo containerlab deploy --topo topology.yaml
 ```
 
@@ -541,9 +542,9 @@ $ sudo ifconfig br-tun-e2 up
 Then prepare to connect vxlans in mgmt cluster by:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-$ sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.121 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48317 options:tag=321
-$ sudo ovs-vsctl add-port br-tun-e1 vxlan1 -- set interface vxlan1 type=vxlan options:remote_ip=10.10.0.122 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48318 options:tag=321
-$ sudo ovs-vsctl add-port br-tun-e2 vxlan2 -- set interface vxlan2 type=vxlan options:remote_ip=10.10.0.123 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48319 options:tag=321
+$ sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.121 options:dst_port=48317 options:tag=321
+$ sudo ovs-vsctl add-port br-tun-e1 vxlan1 -- set interface vxlan1 type=vxlan options:remote_ip=10.10.0.122 options:dst_port=48318 options:tag=321
+$ sudo ovs-vsctl add-port br-tun-e2 vxlan2 -- set interface vxlan2 type=vxlan options:remote_ip=10.10.0.123 options:dst_port=48319 options:tag=321
 ```
 
 ## 4.2 Setup OVS
@@ -554,37 +555,31 @@ Then in each worker clusters, connect the otherpart by:
 ##### -----=[ In regional cluster ]=----- ####
 $ sudo ovs-vsctl add-br eth1
 $ sudo ifconfig eth1 up
-$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48317 options:tag=321 # change remote ip to mgmt cluster machine's ip
+$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:dst_port=48317 options:tag=321 # change remote ip to mgmt cluster machine's ip
 ```
 
 ```bash
 ##### -----=[ In edge01 cluster ]=----- ####
 $ sudo ovs-vsctl add-br eth1
 $ sudo ifconfig eth1 up
-$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48318 options:tag=321 # change remote ip to mgmt cluster machine's ip
+$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:dst_port=48318 options:tag=321 # change remote ip to mgmt cluster machine's ip
 ```
 
 ```bash
 ##### -----=[ In edge02 cluster ]=----- ####
 $ sudo ovs-vsctl add-br eth1
 $ sudo ifconfig eth1 up
-$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:df_default=true options:egress_pkt_mark=0 options:in_key=flow options:out_key=flow options:dst_port=48319 options:tag=321 # change remote ip to mgmt cluster machine's ip
+$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:dst_port=48319 options:tag=321 # change remote ip to mgmt cluster machine's ip
 ```
 
 Also, create interfaces for `eth1.2` ~ `eth1.6`. These interfaces will be later connected to n3, n4, n6. Those interfaces will be connected to `eth1` OVS bridge in each worker nodes. So perform:
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
-$ sudo ip link add eth1.2 type veth peer name eth1.2-br
-$ sudo ip link add eth1.3 type veth peer name eth1.3-br
-$ sudo ip link add eth1.4 type veth peer name eth1.4-br
-$ sudo ip link add eth1.5 type veth peer name eth1.5-br
-$ sudo ip link add eth1.6 type veth peer name eth1.6-br
-
-$ sudo ovs-vsctl add-port eth1 eth1.2-br
-$ sudo ovs-vsctl add-port eth1 eth1.3-br
-$ sudo ovs-vsctl add-port eth1 eth1.4-br
-$ sudo ovs-vsctl add-port eth1 eth1.5-br
-$ sudo ovs-vsctl add-port eth1 eth1.6-br
+$ sudo ip link add link eth1 name "eth1.2" type vlan id 2
+$ sudo ip link add link eth1 name "eth1.3" type vlan id 3
+$ sudo ip link add link eth1 name "eth1.4" type vlan id 4
+$ sudo ip link add link eth1 name "eth1.5" type vlan id 5
+$ sudo ip link add link eth1 name "eth1.6" type vlan id 6
 ```
 
 ## 4.3 Apply Nephio Networks
@@ -700,8 +695,60 @@ Once Free5gc-CP was setup properly, you can pretty much deploy other `UPF`, `AMF
 $ kubectl apply -f test-infra/e2e/tests/free5gc/005-edge-free5gc-upf.yaml
 $ kubectl apply -f test-infra/e2e/tests/free5gc/006-regional-free5gc-amf.yaml
 $ kubectl apply -f test-infra/e2e/tests/free5gc/006-regional-free5gc-smf.yaml
+``` 
+
+This take a bit more time, in `regional` check `amf`. In step 6, SMF in `regional` wil connect to UPF in `edge1` and `edge02`. Therefore, check SMF's log in `regional` by:
+
+```bash
+##### -----=[ In regional cluster ]=----- ####
+$ kubectl logs -n free5gc-cp -l name=smf-regional
+...
+2024-04-28T19:26:17Z [INFO][SMF][App] Received PFCP Association Setup Accepted Response from UPF[172.1.0.254]
+2024-04-28T19:26:17Z [INFO][SMF][App] Sending PFCP Association Request to UPF[172.1.2.254]
+2024-04-28T19:26:17Z [INFO][LIB][PFCP] Remove Request Transaction [2]
+2024-04-28T19:26:17Z [INFO][SMF][App] Received PFCP Association Setup Accepted Response from UPF[172.1.2.254]
 ```
-- TBD
+If both UPFs were successfully connected, this means that the N4 connection was successful.
 
 # 7. Deploying UERANSIM
-- TBD
+```bash
+##### -----=[ In regional cluster ]=----- ####
+$ kubectl get svc -n free5gc-cp
+...
+udr-nudr  ClusterIP 10.104.71.182  <none>  80/TCP 5d15h
+webui-service NodePort  10.104.14.50 <none>  5000:30500/TCP 5d15h
+```
+Now, login to the Free5GC login page. You can access the server using the `webui-service` node port. 
+
+Follow https://free5gc.org/guide/Webconsole/Create-Subscriber-via-webconsole/ create subscriber using step 4.
+
+```bash
+##### -----=[ In mgmt cluster ]=----- ####
+kubectl apply -f test-infra/e2e/tests/free5gc/007-edge01-ueransim.yaml
+```
+
+Then this will create a `ueransim` namespace in `edge01`. This has two deployments `ueransimgnb` which acts as a gNodeb and `ueransimue` which acts as a UE.
+```bash
+##### -----=[ In edge01 cluster ]=----- ####
+$ kubectl get pods -n ueransim
+NAME  READY STATUS  RESTARTS AGE
+ueransimgnb-edge01-7b764c4f9c-92spz 1/1 Running 0  37m
+ueransimue-edge01-7b44fcd85b-r2j2n  1/1 Running 0  37m
+```
+Once `ueransimgnb-edge01` deployment starts, this will make connection to AMF in `regional` cluster. This communication is called `N2`. Check logs from `regional` cluster to check if the AMF connection was successful using the following command:
+
+```bash
+##### -----=[ In regional cluster ]=----- ####
+$ kubectl logs -n free5gc-cp -l name=amf-regional
+2024-04-29T11:59:14Z [INFO][AMF][NGAP][172.2.0.254:38273][AMF_UE_NGAP_ID:23] Uplink NAS Transport (RAN UE NGAP ID: 1)
+2024-04-29T11:59:14Z [INFO][LIB][FSM] Handle event[Gmm Message], transition from [Registered] to [Registered]
+2024-04-29T11:59:14Z [INFO][AMF][GMM][AMF_UE_NGAP_ID:23][SUPI:imsi-208930000000003] Handle UL NAS Transport
+2024-04-29T11:59:14Z [INFO][AMF][GMM][AMF_UE_NGAP_ID:23][SUPI:imsi-208930000000003] Transport 5GSM Message to SMF
+2024-04-29T11:59:14Z [INFO][AMF][GMM][AMF_UE_NGAP_ID:23][SUPI:imsi-208930000000003] Select SMF [snssai: {Sst:1 Sd:010203}, dnn: internet]
+2024-04-29T11:59:14Z [INFO][AMF][GMM][AMF_UE_NGAP_ID:23][SUPI:imsi-208930000000003] create smContext[pduSessionID: 1] Success
+2024-04-29T11:59:14Z [INFO][AMF][Producer] Handle N1N2 Message Transfer Request
+2024-04-29T11:59:14Z [INFO][AMF][NGAP][172.2.0.254:38273][AMF_UE_NGAP_ID:23] Send PDU Session Resource Setup Request
+2024-04-29T11:59:14Z [INFO][AMF][GIN] | 200 | 10.121.0.52 | POST  | /namf-comm/v1/ue-contexts/imsi-208930000000003/n1-n2-messages |
+2024-04-29T11:59:14Z [INFO][AMF][NGAP][172.2.0.254:38273][AMF_UE_NGAP_ID:23] Handle PDU Session Resource Setup Response
+```
+As seen in the log, AMF receives request from gNodeB in `edge01` cluster.
