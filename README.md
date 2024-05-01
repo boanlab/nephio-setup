@@ -13,7 +13,8 @@ This document demonstrates the installation guide for Nephio R2 and [Free5CP dem
 # 1. Prerequsites
 ## 1.1 Servers
 The environment will utilize 4 servers:
-> Official Nephio GCP utilizes single server with 8 vCPU and 8GB RAM. However, for our purpose, we will be using extra resources. In the case of the IP address, you must configure it by changing it to the IP of the installation environment.
+> Official Nephio GCP utilizes single server with 8 vCPU and 8GB RAM. However, for our purpose, we will be using extra resources. 
+> In the case of the IP address, you must configure it by changing it to the IP of the installation environment.
 
 |Type|Spec|K8s Cluster Name|IP Address|Pod CIDR|
 |--|--|--|--|--|
@@ -169,6 +170,7 @@ $ sudo make install
 ## 1.4 Prepare Nephio
 Nephio utilizes `gitea` and `gitea` utilizes 2 local path PVs. Therefore, Create pv in `mgmt` cluster as follows:
 ```yaml
+# Change hostPath to install env user path
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -181,7 +183,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   volumeMode: Filesystem
   hostPath:
-    path: /home/boan/nephio/gitea/data-gitea-0
+    path: /home/boan/nephio/gitea/data-gitea-0 #change here
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -195,7 +197,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   volumeMode: Filesystem
   hostPath:
-    path: /home/boan/nephio/gitea/data-gitea-postgresql-0
+    path: /home/boan/nephio/gitea/data-gitea-postgresql-0 #change here
 ```
 After save codes, apply it
 ```bash
@@ -216,16 +218,33 @@ $ export ANSIBLE_CMD_EXTRA_VAR_LIST="k8s.context=kubernetes-admin@mgmt kind.enab
 $ sudo -E ./test-infra/e2e/provision/init.sh
 ```
 
-The installation sequence normally takes around 20 ~ 30 minutes, keep monitoring namespaces by:
+> **IMPORTANT:** However, before running the init.sh script, the IP addresses of gitea and nephio-webui, nephio installation components, must be changed to the IP addresses of the subnet range of the installation environment. For this purpose, the following two tasks need to be performed.
+```
+1. After cloning https://github.com/boanlab/nephio-catalog.git repository to a random git repository, change the 10.10.0.131 and 10.10.0.132 IP address strings.
+2. Among the codes in the downloaded test-infra directory, change the string written with the https://github.com/boanlab/nephio-catalog.git address to the cloned repository address.
+```
+
+Search and change the strings corresponding to task 1 as follows.
+
+![gitea_change](./pic/gitea_address_change.png)
+![nephio_webui_change](./pic/nephio_webui_change.png)
+
+Search and change the strings corresponding to task 2 as follows.
+
+![test-infra_change](./pic/test-infra_change.png)
+
+After fix, run init.sh. and the installation sequence normally takes around 20 ~ 30 minutes, keep monitoring namespaces by:
 ```bash
 $ watch -n 1 kubectl get ns
 ```
 
 Once the `gitea/gitea-0` and `gitea/gitea-postgresql-0` starts in Nephio, we need to perform:
 ```bash
-$ sudo chmod 777 /home/boan/nephio -R
+$ sudo chmod 777 /home/boan/nephio -R ##Set PV's hostPath
 ```
 Otherwilse, the Nephio will get stuck while installing.
+
+
 
 # 3. Adding K8s Clusters to Nephio
 ## 3.1 Registering Clusters to Nephio
@@ -457,7 +476,6 @@ This might fail one time, try again. If the problem proceeds, check for the erro
 ``` bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
 $ kubectl get pods -n config-management-system
-
 NAME                                          READY   STATUS    RESTARTS       AGE
 config-management-operator-6946b77565-wxwvd   1/1     Running   0              6d20h
 reconciler-manager-5b5d8557-wf69f             2/2     Running   0              6d20h
@@ -468,7 +486,6 @@ Also, check if `root-reconciler` can actually access the gitea properly by:
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
 $ kubectl logs -n config-management-system root-reconciler-regional-79949ff68-r5jvs -c git-sync
-
 INFO: detected pid 1, running init handler
 I0415 04:31:40.264048      12 main.go:1101] "level"=1 "msg"="setting up git credential store"
 ...
