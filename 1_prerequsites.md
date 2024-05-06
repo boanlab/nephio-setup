@@ -243,8 +243,6 @@ lsmod | grep gtp
 Nephio utilizes `gitea` that needs 2 hostPath PVs; thus, create these PVs in `mgmt` cluster.
 
 ```yaml
-# Change hostPath to install env user path
-
 apiVersion: v1
 kind: PersistentVolume
 metadata:
