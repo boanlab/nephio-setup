@@ -16,6 +16,21 @@ The test environment contains 4 servers:
 |Edge01 Cluster|8 vCPU / 8GB RAM | `edge01` | 172.18.0.5 | 10.122.0.0/16 |
 |Edge02 Cluster|8 vCPU / 8GB RAM | `edge02` | 172.18.0.6 | 10.123.0.0/16 |
 
+When install in GCP, VPC settings are required, and the configured VPC network must be applied to the instance.
+To set up a VPC network, proceed in the following order.
+```
+1. VPC Network > CREATE VPC NETWORK
+2. In New Subnet, set the region to the same region as the instance and IP Range to 172.18.0.0/24, then press the create button.
+```
+
+After creating a VPC network, apply the VPC Network to the instance through the following procedure.
+```
+1. Create Instance > Advanced Options > Networking > Network Interface
+2. Click 'Edit Network Interface', and select the created vpc network.
+3. Click Boot Disk and change it to Ubuntu.
+4. Click Create to create an instance.
+```
+
 ## 1.2 Install kubernetes
 
 We use the following versions to set up Nephio and Free5gc.
@@ -25,6 +40,7 @@ We use the following versions to set up Nephio and Free5gc.
 - **CNI**: Kindnet
 
 ### Install Kubernetes with Containerd
+
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
 
@@ -40,7 +56,7 @@ sudo chmod a+r /etc/apt/keyrings/docker.gpg
 # add Docker repository
 echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# update the Docker repo
+# update the docker repo
 sudo apt-get update
 
 # install containerd
@@ -243,6 +259,8 @@ lsmod | grep gtp
 Nephio utilizes `gitea` that needs 2 hostPath PVs; thus, create these PVs in `mgmt` cluster.
 
 ```yaml
+# Change hostPath to install env user path
+
 apiVersion: v1
 kind: PersistentVolume
 metadata:
