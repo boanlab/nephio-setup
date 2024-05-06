@@ -170,4 +170,4 @@ $ kubectl create -f topo.yaml
 ---
 |Before|  |  |  |  |  |  |Next|
 |--|--|--|--|--|--|--|--|
-|[ Go to Before Page](3.adding_k8s_clusters_to_nephio.md) |  |  |  |  |  |  | [ Go to Next Page ](5.deploying_free5gc_cp.md)|
+|[ Go to Before Page](3_add_k8s_clusters_to_nephio.md) |  |  |  |  |  |  | [ Go to Next Page ](5_deploy_free5gc_cp.md)|

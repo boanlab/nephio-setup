@@ -47,4 +47,4 @@ As seen in the log, AMF receives request from gNodeB in `edge01` cluster.
 ---
 |Before|  |  |  |  |  |  |Index|
 |--|--|--|--|--|--|--|--|
-|[ Go to Before Page](6.deploying_upf_amf_smf.md) |  |  |  |  |  |  | [ Go to Index Page ](README.md)|
+|[ Go to Before Page](6_deploy_upf_amf_smf.md) |  |  |  |  |  |  | [ Go to Index Page ](README.md)|

@@ -56,4 +56,4 @@ Otherwilse, the Nephio will get stuck while installing.
 ---
 |Before|  |  |  |  |  |  |Next|
 |--|--|--|--|--|--|--|--|
-|[ Go to Before Page](1.prerequsites) |  |  |  |  |  |  | [ Go to Next Page ](3.adding_k8s_clusters_to_nephio.md)|
+|[ Go to Before Page](1_prerequsites.md) |  |  |  |  |  |  | [ Go to Next Page ](3_add_k8s_clusters_to_nephio.md)|

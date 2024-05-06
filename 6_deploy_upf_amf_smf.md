@@ -26,4 +26,4 @@ If both UPFs were successfully connected, this means that the N4 connection was 
 ---
 |Before|  |  |  |  |  |  |Next|
 |--|--|--|--|--|--|--|--|
-|[ Go to Before Page](5.deploying_free5gc_cp.md) |  |  |  |  |  |  | [ Go to Next Page ](7.deploying_ueransim.md)|
+|[ Go to Before Page](5_deploy_free5gc_cp.md) |  |  |  |  |  |  | [ Go to Next Page ](7_deploy_ueransim.md)|
