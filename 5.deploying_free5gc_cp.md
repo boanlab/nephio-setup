@@ -1,5 +1,5 @@
 # 5. Deploying Free5gc-cp
-Now, deploy Free5gc-CP as usual: https://docs.nephio.org/docs/guides/user-guides/exercise-1-free5gc/#step-4-deploy-free5gc-control-plane-functions. The Nephio webui will be running in `10.10.0.132:7007` (for example). 
+Now, deploy Free5gc-CP as usual: https://docs.nephio.org/docs/guides/user-guides/exercise-1-free5gc/#step-4-deploy-free5gc-control-plane-functions. The Nephio webui will be running in `172.18.0.132:7007` (for example). 
 
 The regional cluster utilizes host path PV to store data for `mongodb`. Create a new PV in `regional` cluster by:
 ```yaml
