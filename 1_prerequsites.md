@@ -289,6 +289,6 @@ kubectl apply -f gitea-pv.yaml
 ```
 <br></br>
 ---
-|Index|  |  |  |  |  |  |Next|
-|--|--|--|--|--|--|--|--|
-|[ Go to Index Page](README.md) |  |  |  |  |  |  | [ Go to Next Page ](2_install_nephio.md)|
+|Index|Next|
+|--|--|
+|[ Go to Index Page](README.md) | [ Go to Next Page ](2_install_nephio.md)|
