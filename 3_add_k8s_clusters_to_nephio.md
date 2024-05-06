@@ -28,13 +28,13 @@ NAME                        TYPE   CONTENT   DEPLOYMENT   READY   ADDRESS
 ...
 edge01                      git    Package   true         False    http://172.18.0.200:3000/nephio/edge01.git
 edge02                      git    Package   true         False    http://172.18.0.200:3000/nephio/edge02.git
-mgmt                        git    Package   true         True     http://10.10.0.131:3000/nephio/mgmt.git
-mgmt-staging                git    Package   false        True     http://10.10.0.131:3000/nephio/mgmt-staging.git
+mgmt                        git    Package   true         True     http://172.18.0.200:3000/nephio/mgmt.git
+mgmt-staging                git    Package   false        True     http://172.18.0.200:3000/nephio/mgmt-staging.git
 ...
 regional                    git    Package   true         False    http://172.18.0.200:3000/nephio/regional.git
 ```
 
-As you can see, the repositories are directing to wrong gitea address which is `http://172.18.0.200:3000`. We need to modify this manually to our address. You can achieve this by visiting the gitea service. The gitea will be running in `http://10.10.0.131:3000/`, the default login credentials are as it follows:
+As you can see, the repositories are directing to wrong gitea address which is `http://172.18.0.200:3000`. We need to modify this manually to our address. You can achieve this by visiting the gitea service. The gitea will be running in `http://172.18.0.200:3000/`, the default login credentials are as it follows:
 - **username**: nephio
 - **password**: secret
 
@@ -61,7 +61,7 @@ spec:
   git:
     branch: main
     directory: /
-    repo: http://10.10.0.131:3000/nephio/regional.git # change here to gitea repo ip address
+    repo: http://172.18.0.200:3000/nephio/regional.git # change here to gitea repo ip address
     secretRef:
       name: regional-access-token-porch
   type: git
@@ -74,11 +74,11 @@ $ kubectl get repositories
 
 NAME                        TYPE   CONTENT   DEPLOYMENT   READY   ADDRESS
 ...
-edge01                      git    Package   true         True    http://10.10.0.131:3000/nephio/edge01.git
-edge02                      git    Package   true         True    http://10.10.0.131:3000/nephio/edge02.git
-mgmt                        git    Package   true         True    http://10.10.0.131:3000/nephio/mgmt.git
-mgmt-staging                git    Package   false        True    http://10.10.0.131:3000/nephio/mgmt-staging.git
-regional                    git    Package   true         True    http://10.10.0.131:3000/nephio/regional.git
+edge01                      git    Package   true         True    http://172.18.0.200:3000/nephio/edge01.git
+edge02                      git    Package   true         True    http://172.18.0.200:3000/nephio/edge02.git
+mgmt                        git    Package   true         True    http://172.18.0.200:3000/nephio/mgmt.git
+mgmt-staging                git    Package   false        True    http://172.18.0.200:3000/nephio/mgmt-staging.git
+regional                    git    Package   true         True    http://172.18.0.200:3000/nephio/regional.git
 ```
 If the addresses were changed to the designated gitea service's IP, the `READY` field will be changed to `True`. If this step was successfully performed, the edge and regional clusters can Join without any problem.
 
@@ -111,7 +111,7 @@ The clusters need to have those secrets registered in their clusters. This means
 # Before copy&paste, change username, ip address, homePath
 
 $ kubectl get secret regional-access-token-configsync -o yaml > regional-secret.yaml
-$ scp regional-secret.yaml boan@10.10.0.120:/home/boan # change mgmt cluster machine's username, homepath, ip address 
+$ scp regional-secret.yaml boan@172.18.0.120:/home/boan # change mgmt cluster machine's username, homepath, ip address 
 ```
 
 This will export the secret to regional cluster as `regional-secret.yaml`. In the destination cluster, in this case `regional`, modify a bit of the secret.
@@ -168,7 +168,7 @@ metadata: # kpt-merge: config-management-system/regional
 spec:
   sourceFormat: unstructured
   git:
-    repo: http://10.10.0.120:3000/nephio/regional.git # change gitea repo ip address
+    repo: http://172.18.0.120:3000/nephio/regional.git # change gitea repo ip address
     branch: main
     auth: token
     secretRef:
@@ -190,7 +190,7 @@ metadata: # kpt-merge: config-management-system/edge01
 spec:
   sourceFormat: unstructured
   git:
-    repo: http://10.10.0.131:3000/nephio/edge01.git # change gitea repo ip address
+    repo: http://172.18.0.200:3000/nephio/edge01.git # change gitea repo ip address
     branch: main
     auth: token
     secretRef:
@@ -212,7 +212,7 @@ metadata: # kpt-merge: config-management-system/edge02
 spec:
   sourceFormat: unstructured
   git:
-    repo: http://10.10.0.131:3000/nephio/edge02.git # change gitea repo ip address
+    repo: http://172.18.0.200:3000/nephio/edge02.git # change gitea repo ip address
     branch: main
     auth: token
     secretRef:
@@ -247,7 +247,7 @@ I0415 04:31:40.264048      12 main.go:1101] "level"=1 "msg"="setting up git cred
 ...
 I0415 05:50:31.188928      12 main.go:585] "level"=1 "msg"="next sync" "wait_time"=15000000000
 I0415 05:50:46.194475      12 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/rev" "cmd"="git rev-parse HEAD"
-I0415 05:50:46.198248      12 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/rev" "cmd"="git ls-remote -q http://10.10.0.131:3000/nephio/regional.git refs/heads/main"
+I0415 05:50:46.198248      12 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/rev" "cmd"="git ls-remote -q http://172.18.0.200:3000/nephio/regional.git refs/heads/main"
 I0415 05:50:46.232708      12 main.go:1065] "level"=1 "msg"="no update required" "rev"="HEAD" "local"="059047c546d8c944a3bca69c1c03e81fb9a52d14" "remote"="059047c546d8c944a3bca69c1c03e81fb9a52d14"
 I0415 05:50:46.232790      12 main.go:585] "level"=1 "msg"="next sync" "wait_time"=15000000000
 ```

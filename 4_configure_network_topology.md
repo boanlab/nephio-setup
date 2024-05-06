@@ -53,9 +53,9 @@ Then prepare to connect vxlans in mgmt cluster by:
 ##### -----=[ In mgmt cluster ]=----- ####
 #Before copy&paste, change remote_ip address to regional, edge01, edge02 ip address!
 
-$ sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.121 options:dst_port=48317 options:tag=321
-$ sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.122 options:dst_port=48318 options:tag=321
-$ sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.123 options:dst_port=48319 options:tag=321
+$ sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=172.18.0.121 options:dst_port=48317 options:tag=321
+$ sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=172.18.0.122 options:dst_port=48318 options:tag=321
+$ sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=172.18.0.123 options:dst_port=48319 options:tag=321
 ```
 
 ## 4.2 Setup OVS
@@ -68,7 +68,7 @@ Then in each worker clusters, connect the otherpart by:
 
 $ sudo ovs-vsctl add-br eth1
 $ sudo ifconfig eth1 up
-$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:dst_port=48317 options:tag=321 # change remote ip to mgmt cluster machine's ip
+$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=172.18.0.120 options:dst_port=48317 options:tag=321 # change remote ip to mgmt cluster machine's ip
 ```
 
 ```bash
@@ -77,7 +77,7 @@ $ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options
 
 $ sudo ovs-vsctl add-br eth1
 $ sudo ifconfig eth1 up
-$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:dst_port=48318 options:tag=321 # change remote ip to mgmt cluster machine's ip
+$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=172.18.0.120 options:dst_port=48318 options:tag=321 # change remote ip to mgmt cluster machine's ip
 ```
 
 ```bash
@@ -86,7 +86,7 @@ $ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options
 
 $ sudo ovs-vsctl add-br eth1
 $ sudo ifconfig eth1 up
-$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=10.10.0.120 options:dst_port=48319 options:tag=321 # change remote ip to mgmt cluster machine's ip
+$ sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=172.18.0.120 options:dst_port=48319 options:tag=321 # change remote ip to mgmt cluster machine's ip
 ```
 
 Also, create interfaces for `eth1.2` ~ `eth1.6`. These interfaces will be later connected to n3, n4, n6. Those interfaces will be connected to `eth1` OVS bridge in each worker nodes. So perform:
@@ -131,7 +131,7 @@ metadata:
 spec:
   nodes:
     srl:
-      address: 10.10.0.120:57400 # change here to mgmt ip address!
+      address: 172.18.0.120:57400 # change here to mgmt ip address!
       provider: srl.nokia.com
     mgmt:
       provider: host

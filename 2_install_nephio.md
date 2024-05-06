@@ -13,7 +13,7 @@ $ sudo -E ./test-infra/e2e/provision/init.sh
 
 > **IMPORTANT:** However, before running the init.sh script, the IP addresses of gitea and nephio-webui, nephio installation components, must be changed to the IP addresses of the subnet range of the installation environment. For this purpose, the following two tasks need to be performed.
 ```
-1. After cloning https://github.com/boanlab/nephio-catalog.git repository to a arbitrary git repository, change the 10.10.0.131, 10.10.0.132 IP address and 10.10.0.130-140 IP range strings.
+1. After cloning https://github.com/boanlab/nephio-catalog.git repository to a arbitrary git repository, change the 172.18.0.200,  and 172.18.0.0/24 IP range strings.
 2. Among the codes in the downloaded test-infra directory, change the string written with the https://github.com/boanlab/nephio-catalog.git address to the cloned repository address.
 ```
 
@@ -21,16 +21,16 @@ Search and change the strings corresponding to task 1 as follows. and then, comm
 ```bash
 # before copy&paste sed command, change ip address strings and ip range strings!
 
-$ sed 's/10.10.0.131/[gitea_ip_addr]/g' nephio-catalog/distros/gcp/nephio-mgmt/nephio-controllers/app/deployment-token-controller.yaml
-$ sed 's/10.10.0.131/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/gitea/service-gitea.yaml
-$ sed 's/10.10.0.131-10.10.0.140/[subnet_ip_range]/g' nephio-catalog/distros/sandbox/metallb-sandbox-config/ipaddresspool.yaml
-$ sed 's/10.10.0.131/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/repo-porch.yaml
-$ sed 's/10.10.0.131/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/repository/set-values.yaml
-$ sed 's/10.10.0.131/[gitea_ip_addr]/g' nephio-catalog/nephio/core/nephio-operator/app/controller/deployment-controller.yaml
-$ sed 's/10.10.0.131/[gitea_ip_addr]/g' nephio-catalog/nephio/core/nephio-operator/app/controller/deployment-token-controller.yaml
-$ sed 's/10.10.0.131/[gitea_ip_addr]/g' nephio-catalog/nephio/optional/rootsync/rootsync.yaml
-$ sed 's/10.10.0.131/[gitea_ip_addr]/g' nephio-catalog/nephio/optional/rootsync/set-values.yaml
-$ sed 's/10.10.0.132/[nephio_webui_addr]/g' nephio-catalog/nephio/optional/webui/service.yaml
+$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/gcp/nephio-mgmt/nephio-controllers/app/deployment-token-controller.yaml
+$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/gitea/service-gitea.yaml
+$ sed 's/172.18.0.200-172.18.0.140/[subnet_ip_range]/g' nephio-catalog/distros/sandbox/metallb-sandbox-config/ipaddresspool.yaml
+$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/repo-porch.yaml
+$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/repository/set-values.yaml
+$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/core/nephio-operator/app/controller/deployment-controller.yaml
+$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/core/nephio-operator/app/controller/deployment-token-controller.yaml
+$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/optional/rootsync/rootsync.yaml
+$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/optional/rootsync/set-values.yaml
+$ sed 's/172.18.0.132/[nephio_webui_addr]/g' nephio-catalog/nephio/optional/webui/service.yaml
 ```
 
 Search and change the strings corresponding to task 2 as follows.
