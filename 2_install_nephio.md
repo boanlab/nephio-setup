@@ -23,14 +23,14 @@ Search and change the strings corresponding to task 1 as follows. and then, comm
 
 $ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/gcp/nephio-mgmt/nephio-controllers/app/deployment-token-controller.yaml
 $ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/gitea/service-gitea.yaml
-$ sed 's/172.18.0.200-172.18.0.140/[subnet_ip_range]/g' nephio-catalog/distros/sandbox/metallb-sandbox-config/ipaddresspool.yaml
+$ sed 's/172.18.0.200\/20/[subnet_ip_range]/g' nephio-catalog/distros/sandbox/metallb-sandbox-config/ipaddresspool.yaml
 $ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/repo-porch.yaml
 $ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/repository/set-values.yaml
 $ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/core/nephio-operator/app/controller/deployment-controller.yaml
 $ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/core/nephio-operator/app/controller/deployment-token-controller.yaml
 $ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/optional/rootsync/rootsync.yaml
 $ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/optional/rootsync/set-values.yaml
-$ sed 's/172.18.0.132/[nephio_webui_addr]/g' nephio-catalog/nephio/optional/webui/service.yaml
+$ sed 's/172.18.0.200/[nephio_webui_addr]/g' nephio-catalog/nephio/optional/webui/service.yaml
 ```
 
 Search and change the strings corresponding to task 2 as follows.
