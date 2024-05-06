@@ -287,6 +287,7 @@ sed -i 's/[USER]/$USER/g' gitea-pv.yaml
 # apply the YAML file to create 2 local path PVs
 kubectl apply -f gitea-pv.yaml
 ```
+
 <br></br>
 ---
 |Index|Next|
