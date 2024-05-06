@@ -266,4 +266,4 @@ If you seen all `edge01`, `edge02` and `regional` clusters having proper git-syn
 ---
 |Before|  |  |  |  |  |  |Next|
 |--|--|--|--|--|--|--|--|
-|[ Go to Before Page](2.initialize_nephio.md) |  |  |  |  |  |  | [ Go to Next Page ](4.configure_network_topology.md)|
+|[ Go to Before Page](2_install_nephio.md) |  |  |  |  |  |  | [ Go to Next Page ](4_configure_network_topology.md)|

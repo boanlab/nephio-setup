@@ -65,4 +65,4 @@ This will deploy
 ---
 |Before|  |  |  |  |  |  |Next|
 |--|--|--|--|--|--|--|--|
-|[ Go to Before Page](4.configure_network_topology.md) |  |  |  |  |  |  | [ Go to Next Page ](6.deploying_upf_amf_smf.md)|
+|[ Go to Before Page](4_configure_network_topology.md) |  |  |  |  |  |  | [ Go to Next Page ](6_deploy_upf_amf_smf.md)|
