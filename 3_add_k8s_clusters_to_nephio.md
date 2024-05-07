@@ -1,28 +1,28 @@
 # 3. Adding K8s Clusters to Nephio
 ## 3.1 Registering Clusters to Nephio
-Once step 2 was finished **without any errors**, add `regional` cluster to Nephio as follows:
+### Once step 2 was finished **without any errors**, add `regional` cluster to Nephio as follows:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-$ kubectl get repositories
-$ porchctl rpkg get --name nephio-workload-cluster
-$ porchctl rpkg clone -n default catalog-infra-capi-b0ae9512aab3de73bbae623a3b554ade57e15596 --repository mgmt regional
-$ porchctl rpkg pull -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868 regional
-$ kpt fn eval --image gcr.io/kpt-fn/set-labels:v0.2.0 regional -- "nephio.org/site-type=regional" "nephio.org/region=us-west1"
-$ porchctl rpkg push -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868 regional
-$ porchctl rpkg propose -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868
-$ porchctl rpkg approve -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868
+kubectl get repositories
+porchctl rpkg get --name nephio-workload-cluster
+porchctl rpkg clone -n default catalog-infra-capi-b0ae9512aab3de73bbae623a3b554ade57e15596 --repository mgmt regional
+porchctl rpkg pull -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868 regional
+kpt fn eval --image gcr.io/kpt-fn/set-labels:v0.2.0 regional -- "nephio.org/site-type=regional" "nephio.org/region=us-west1"
+porchctl rpkg push -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868 regional
+porchctl rpkg propose -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868
+porchctl rpkg approve -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868
 ```
 
-This will create draft `regional` to `gitea`. Then add `edge01` and `edge02` clusters to Nephio as follows:
+### This will create draft `regional` to `gitea`. Then add `edge01` and `edge02` clusters to Nephio as follows:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-$ kubectl apply -f test-infra/e2e/tests/free5gc/002-edge-clusters.yaml
+kubectl apply -f test-infra/e2e/tests/free5gc/002-edge-clusters.yaml
 ```
 
-Then after a bit of time, check for repositories registered in Nephio as follows
+### Then after a bit of time, check for repositories registered in Nephio as follows
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-$ kubectl get repositories
+kubectl get repositories
 
 NAME                        TYPE   CONTENT   DEPLOYMENT   READY   ADDRESS
 ...
@@ -43,7 +43,7 @@ Once logged in, visit repository `nephio/mgmt` and modify the following files:
 - `mgmt/edge01-repo/repo-porch.yaml`
 - `mgmt/edge02-repo/repo-porch.yaml`
 
-Replace any `172.18.0.200` to the gitea's service IP. An example will be like below:
+### Replace any `172.18.0.200` to the gitea's service IP. An example will be like below:
 ```yaml
 # change gitea repo ip address!
 
@@ -67,10 +67,10 @@ spec:
   type: git
 ```
 
-Once you have committed the change, the porch-system which is running in `mgmt` cluster will notice that the repositories were changed. This might take a little bit of time, in some time later, check the repositories registered in Nephio by:
+### Once you have committed the change, the porch-system which is running in `mgmt` cluster will notice that the repositories were changed. This might take a little bit of time, in some time later, check the repositories registered in Nephio by:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-$ kubectl get repositories
+kubectl get repositories
 
 NAME                        TYPE   CONTENT   DEPLOYMENT   READY   ADDRESS
 ...
@@ -80,13 +80,13 @@ mgmt                        git    Package   true         True    http://172.18.
 mgmt-staging                git    Package   false        True    http://172.18.0.200:3000/nephio/mgmt-staging.git
 regional                    git    Package   true         True    http://172.18.0.200:3000/nephio/regional.git
 ```
-If the addresses were changed to the designated gitea service's IP, the `READY` field will be changed to `True`. If this step was successfully performed, the edge and regional clusters can Join without any problem.
+### If the addresses were changed to the designated gitea service's IP, the `READY` field will be changed to `True`. If this step was successfully performed, the edge and regional clusters can Join without any problem.
 
 ## 3.2 Clusters Joining Nephio
-In order for regional, edge clusters to join Nephio, they require `secrets` to gain access to `mgmt` cluster's gitea service. The secrets are automatically generated in step 3.1. You can check them by:
+### In order for regional, edge clusters to join Nephio, they require `secrets` to gain access to `mgmt` cluster's gitea service. The secrets are automatically generated in step 3.1. You can check them by:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-$ kubectl get secrets --all-namespaces
+kubectl get secrets --all-namespaces
 
 NAMESPACE                           NAME                                              TYPE                       DATA   AGE
 ...
@@ -110,8 +110,8 @@ The clusters need to have those secrets registered in their clusters. This means
 ##### -----=[ In mgmt cluster ]=----- ####
 # Before copy&paste, change username, ip address, homePath
 
-$ kubectl get secret regional-access-token-configsync -o yaml > regional-secret.yaml
-$ scp regional-secret.yaml boan@172.18.0.120:/home/boan # change mgmt cluster machine's username, homepath, ip address 
+kubectl get secret regional-access-token-configsync -o yaml > regional-secret.yaml
+scp regional-secret.yaml [User]@172.18.0.120:/home/[User] # change mgmt cluster machine's username, homepath, ip address 
 ```
 
 This will export the secret to regional cluster as `regional-secret.yaml`. In the destination cluster, in this case `regional`, modify a bit of the secret.
@@ -137,18 +137,18 @@ Change the namespace of the token to `config-management-system` from `default`. 
 But before apply secrets, install `configsync` in the clusters joining Nephio as follows:
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
-$ kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/nephio/core/configsync@main
-$ kpt fn render configsync
-$ kpt live init configsync
-$ kpt live apply configsync --reconcile-timeout=15m --output=table
+kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/nephio/core/configsync@main
+kpt fn render configsync
+kpt live init configsync
+kpt live apply configsync --reconcile-timeout=15m --output=table
 
-$ kpt pkg get https://github.com/nephio-project/catalog.git/nephio/optional/rootsync@main
+kpt pkg get https://github.com/nephio-project/catalog.git/nephio/optional/rootsync@main
 ```
 
 This will automatically install `configsync`. and next, apply secrets in clusters
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
-$ kubectl apply -f regional-secret.yaml  # edge01-secret.yaml, edge02-secret.yaml in other clusters
+kubectl apply -f regional-secret.yaml  # edge01-secret.yaml, edge02-secret.yaml in other clusters
 ```
 
 After apply secrets, we need to install `rootsync` in the clusters joining Nephio. 
@@ -223,15 +223,15 @@ spec:
 Once the rootsync/rootsync files were modified, install rootsync by:
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
-$ kpt live init rootsync
-$ kpt live apply rootsync --reconcile-timeout=15m --output=table
+kpt live init rootsync
+kpt live apply rootsync --reconcile-timeout=15m --output=table
 ```
 
 This might fail one time, try again. If the problem proceeds, check for the error message and make sure the secrets are registered in respective clusters properly. If you see `root-reconciler` the namespace `config-management-system` like below, this is working as intended.
 
 ``` bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
-$ kubectl get pods -n config-management-system
+kubectl get pods -n config-management-system
 NAME                                          READY   STATUS    RESTARTS       AGE
 config-management-operator-6946b77565-wxwvd   1/1     Running   0              6d20h
 reconciler-manager-5b5d8557-wf69f             2/2     Running   0              6d20h
@@ -241,7 +241,7 @@ root-reconciler-regional-79949ff68-r5jvs      4/4     Running   87 (78m ago)   6
 Also, check if `root-reconciler` can actually access the gitea properly by:
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
-$ kubectl logs -n config-management-system root-reconciler-regional-79949ff68-r5jvs -c git-sync
+kubectl logs -n config-management-system root-reconciler-regional-79949ff68-r5jvs -c git-sync
 INFO: detected pid 1, running init handler
 I0415 04:31:40.264048      12 main.go:1101] "level"=1 "msg"="setting up git credential store"
 ...
@@ -255,7 +255,7 @@ I0415 05:50:46.232790      12 main.go:585] "level"=1 "msg"="next sync" "wait_tim
 > If the message keeps coming out as if the target gitea address is not accessable, perform `curl` to the gitea service. If the gitea is stil down, restart the `metallb-system`'s daemonsets in `mgmt` cluster. There are some frequent occurances with the `metallb-system/speaker` daemonset not serving the gitea properly. In this case, restart the daemonset by:
 > ```bash
 > ##### -----=[ In mgmt cluster ]=----- ####
-> $ kubectl rollout restart daemonsets -n metallb-system
+> kubectl rollout restart daemonsets -n metallb-system
 > ```
 > This will solve the issue and make the load balancer IP work again.
 

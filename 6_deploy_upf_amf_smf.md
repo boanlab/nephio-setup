@@ -19,7 +19,7 @@ Check SMF's log in `regional`.
 ```bash
 ##### -----=[ In regional cluster ]=----- ####
 
-$ kubectl logs -n free5gc-cp -l name=smf-regional
+kubectl logs -n free5gc-cp -l name=smf-regional
 
 [INFO][SMF][App] Received PFCP Association Setup Accepted Response from UPF[172.1.0.254]
 [INFO][SMF][App] Sending PFCP Association Request to UPF[172.1.2.254]

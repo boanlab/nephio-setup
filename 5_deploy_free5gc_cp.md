@@ -17,13 +17,13 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   volumeMode: Filesystem
   hostPath:
-    path: /home/boan/nephio/mongodb/
+    path: /home/[User]/nephio/mongodb/
 ```
 
 Then apply pv files as follows:
 ```bash
 ##### -----=[ In regional cluster ]=----- ####
-$ kubectl apply -f mongodb-pv.yaml
+kubectl apply -f mongodb-pv.yaml
 ```
 
 Also, just like the `gitea` PVs in `mgmt` cluster, we need to manually `chmod` the local directory. Otherwise, the `mongodb` will not setup.
@@ -31,29 +31,29 @@ Also, just like the `gitea` PVs in `mgmt` cluster, we need to manually `chmod` t
 ##### -----=[ In regional clusters ]=----- ####
 # change home directory Path to your username!
 
-$ sudo chmod 777 -R /home/boan/nephio/mongodb
+sudo chmod 777 -R /home/[User]/nephio/mongodb
  ```
 
 Then deploy free5gc operators using the following command:
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-$ kubectl apply -f test-infra/e2e/tests/free5gc/004-free5gc-operator.yaml
+kubectl apply -f test-infra/e2e/tests/free5gc/004-free5gc-operator.yaml
 ```
 
 For worker culsters, install some more packages by:
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
-$ kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/nephio/core/workload-crds@main
-$ kpt fn render workload-crds
-$ kpt live init workload-crds
-$ kpt live apply workload-crds --reconcile-timeout=15m --output=table
+kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/nephio/core/workload-crds@main
+kpt fn render workload-crds
+kpt live init workload-crds
+kpt live apply workload-crds --reconcile-timeout=15m --output=table
 
-$ kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/infra/capi/multus@main
-$ kpt fn render multus
-$ kpt live init multus
-$ kpt live apply multus --reconcile-timeout=15m --output=table
+kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/infra/capi/multus@main
+kpt fn render multus
+kpt live init multus
+kpt live apply multus --reconcile-timeout=15m --output=table
 
-$ kubectl rollout restart deployment -n free5gc
+kubectl rollout restart deployment -n free5gc
 ```
 
 This will deploy 

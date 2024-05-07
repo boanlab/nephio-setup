@@ -1,58 +1,58 @@
 # 2. Initialize Nephio
-> **IMPORTANT:** Perform this in `mgmt` cluster.
+> **IMPORTANT:** Perform this in `mgmt` cluster. Git clone test-infra which has Ansible playbook that deploys Nephio. The original Nephio's test-infra cannot provision without Kind, so we have removed KinD by force. Change workdir to home directory and start initializing `init.sh`.
 
-Git clone test-infra which has Ansible playbook that deploys Nephio. The original Nephio's test-infra cannot provision without Kind, so we have removed KinD by force. Change workdir to home directory and start initializing `init.sh`.
+### Download init script & install nephio
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-$ cd ~
-$ git clone https://github.com/boanlab/nephio-test-infra.git test-infra
-$ export NEPHIO_USER=$USER
-$ export ANSIBLE_CMD_EXTRA_VAR_LIST="k8s.context=kubernetes-admin@mgmt kind.enabled=false host_min_vcpu=4 host_min_cpu_ram=8"
-$ sudo -E ./test-infra/e2e/provision/init.sh
+
+# install nephio
+cd ~
+git clone https://github.com/[User]/nephio-test-infra.git test-infra
+export NEPHIO_USER=$USER
+export ANSIBLE_CMD_EXTRA_VAR_LIST="k8s.context=kubernetes-admin@mgmt kind.enabled=false host_min_vcpu=4 host_min_cpu_ram=8"
+sudo -E ./test-infra/e2e/provision/init.sh
 ```
 
-> **IMPORTANT:** However, before running the init.sh script, the IP addresses of gitea and nephio-webui, nephio installation components, must be changed to the IP addresses of the subnet range of the installation environment. For this purpose, the following two tasks need to be performed.
-```
-1. After cloning https://github.com/boanlab/nephio-catalog.git repository to a arbitrary git repository, change the 172.18.0.200,  and 172.18.0.0/24 IP range strings.
-2. Among the codes in the downloaded test-infra directory, change the string written with the https://github.com/boanlab/nephio-catalog.git address to the cloned repository address.
-```
+> **IMPORTANT:** However, before running the init.sh script, the IP addresses of gitea and nephio-webui, nephio installation components, must be changed to the IP addresses of the subnet range of the installation environment. For this purpose, the following two tasks need to be performed. 
+> 1. After cloning https://github.com/[User]/nephio-catalog.git repository to a arbitrary git repository, change the 172.18.0.200,  and 172.18.0.0/24 IP range strings.
+> 2. Among the codes in the downloaded test-infra directory, change the string written with the https://github.com/[User]/nephio-catalog.git address to the cloned repository address.
 
-Search and change the strings corresponding to task 1 as follows. and then, commit the modified code to the cloned repository.
+
+### Search and change the strings corresponding to task 1 as follows. and then, commit the modified code to the cloned repository.
 ```bash
-# before copy&paste sed command, change ip address strings and ip range strings!
+# using sed command, change ip address, ip ranges
 
-$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/gcp/nephio-mgmt/nephio-controllers/app/deployment-token-controller.yaml
-$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/gitea/service-gitea.yaml
-$ sed 's/172.18.0.200\/20/[subnet_ip_range]/g' nephio-catalog/distros/sandbox/metallb-sandbox-config/ipaddresspool.yaml
-$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/repo-porch.yaml
-$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/repository/set-values.yaml
-$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/core/nephio-operator/app/controller/deployment-controller.yaml
-$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/core/nephio-operator/app/controller/deployment-token-controller.yaml
-$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/optional/rootsync/rootsync.yaml
-$ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/optional/rootsync/set-values.yaml
-$ sed 's/172.18.0.200/[nephio_webui_addr]/g' nephio-catalog/nephio/optional/webui/service.yaml
+sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/gcp/nephio-mgmt/nephio-controllers/app/deployment-token-controller.yaml
+sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/gitea/service-gitea.yaml
+sed 's/172.18.0.200\/20/[subnet_ip_range]/g' nephio-catalog/distros/sandbox/metallb-sandbox-config/ipaddresspool.yaml
+sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/repo-porch.yaml
+sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/repository/set-values.yaml
+sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/core/nephio-operator/app/controller/deployment-controller.yaml
+sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/core/nephio-operator/app/controller/deployment-token-controller.yaml
+sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/optional/rootsync/rootsync.yaml
+sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/optional/rootsync/set-values.yaml
+sed 's/172.18.0.200/[nephio_webui_addr]/g' nephio-catalog/nephio/optional/webui/service.yaml
 ```
 
-Search and change the strings corresponding to task 2 as follows.
+### Search and change the strings corresponding to task 2 as follows.
 ```bash
-$ sed 's/boanlab/[cloned repositories name]/g' ./test-infra/e2e/provision/playbooks/roles/bootstrap/defaults/main.yaml
-$ sed 's/boanlab/[cloned repositories name]/g' ./test-infra/e2e/provision/playbooks/roles/install/defaults/main.yaml
+sed 's/[User]/[cloned repositories name]/g' ./test-infra/e2e/provision/playbooks/roles/bootstrap/defaults/main.yaml
+sed 's/[User]/[cloned repositories name]/g' ./test-infra/e2e/provision/playbooks/roles/install/defaults/main.yaml
 ```
 
-After fix, run init.sh. and the installation sequence normally takes around 20 ~ 30 minutes, keep monitoring namespaces by:
+### After fix, run init.sh. and the installation sequence normally takes around 20 ~ 30 minutes, keep monitoring namespaces by:
 ```bash
-$ watch -n 1 kubectl get ns
+watch -n 1 kubectl get ns
 ```
 
-Once the `gitea/gitea-0` and `gitea/gitea-postgresql-0` starts in Nephio, we need to perform:
+### Once the `gitea/gitea-0` and `gitea/gitea-postgresql-0` starts in Nephio, we need to perform:
 ```bash
 # change home directory Path to your username!
 
-$ sudo chmod 777 /home/boan/nephio -R # change here to PV's hostPath
+sudo chmod 777 /home/[User]/nephio -R # change here to PV's hostPath
 ```
-Otherwilse, the Nephio will get stuck while installing.
+### Otherwilse, the Nephio will get stuck while installing.
 
-<br></br>
 ---
 |Before|Next|
 |--|--|
