@@ -1,27 +1,29 @@
-# 2. Initialize Nephio
-> **IMPORTANT:** Perform this in `mgmt` cluster. Git clone test-infra which has Ansible playbook that deploys Nephio. The original Nephio's test-infra cannot provision without Kind, so we have removed KinD by force. Change workdir to home directory and start initializing `init.sh`.
+# 2. Install Nephio
+> **IMPORTANT:** Git clone test-infra repo which has Ansible playbook that deploys Nephio. \
+> The original Nephio's test-infra cannot provision without Kind, so we removed KinD by force. \
+> Change workdir to home directory and start initializing `init.sh`.
 
-### Download init script & install nephio
+### Download init script & Set env
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 
-# install nephio
-cd ~
+# download test-infra repo
 git clone https://github.com/[User]/nephio-test-infra.git test-infra
+
+# set env for nephio
 export NEPHIO_USER=$USER
 export ANSIBLE_CMD_EXTRA_VAR_LIST="k8s.context=kubernetes-admin@mgmt kind.enabled=false host_min_vcpu=4 host_min_cpu_ram=8"
-sudo -E ./test-infra/e2e/provision/init.sh
 ```
 
-> **IMPORTANT:** However, before running the init.sh script, the IP addresses of gitea and nephio-webui, nephio installation components, must be changed to the IP addresses of the subnet range of the installation environment. For this purpose, the following two tasks need to be performed. 
-> 1. After cloning https://github.com/[User]/nephio-catalog.git repository to a arbitrary git repository, change the 172.18.0.200,  and 172.18.0.0/24 IP range strings.
-> 2. Among the codes in the downloaded test-infra directory, change the string written with the https://github.com/[User]/nephio-catalog.git address to the cloned repository address.
+<br></br>
+> **IMPORTANT:** Before running the init.sh script, the IP addresses of installation components, must be changed to  test environment(gitea and nephio-webui). \
+> For this purpose, the following two tasks need to be performed. \
+> 1 - After cloning https://github.com/[User]/nephio-catalog.git repository to a arbitrary git repository, change the 172.18.0.200, and 172.18.0.0/24 IP range strings. \
+> 2 - Among the codes in the downloaded test-infra directory, change the string written with the https://github.com/[User]/nephio-catalog.git address to the cloned repository address.
 
-
-### Search and change the strings corresponding to task 1 as follows. and then, commit the modified code to the cloned repository.
+### Change ip address, ip range in nephio-catalog (task 1)
 ```bash
 # using sed command, change ip address, ip ranges
-
 sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/gcp/nephio-mgmt/nephio-controllers/app/deployment-token-controller.yaml
 sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/distros/sandbox/gitea/service-gitea.yaml
 sed 's/172.18.0.200\/20/[subnet_ip_range]/g' nephio-catalog/distros/sandbox/metallb-sandbox-config/ipaddresspool.yaml
@@ -34,25 +36,36 @@ sed 's/172.18.0.200/[gitea_ip_addr]/g' nephio-catalog/nephio/optional/rootsync/s
 sed 's/172.18.0.200/[nephio_webui_addr]/g' nephio-catalog/nephio/optional/webui/service.yaml
 ```
 
-### Search and change the strings corresponding to task 2 as follows.
+### Change nephio-catalog path in test-infra (task 2)
 ```bash
+# using sed command, change repositories user name
 sed 's/[User]/[cloned repositories name]/g' ./test-infra/e2e/provision/playbooks/roles/bootstrap/defaults/main.yaml
 sed 's/[User]/[cloned repositories name]/g' ./test-infra/e2e/provision/playbooks/roles/install/defaults/main.yaml
 ```
 
-### After fix, run init.sh. and the installation sequence normally takes around 20 ~ 30 minutes, keep monitoring namespaces by:
+### Run init script
 ```bash
-watch -n 1 kubectl get ns
+sudo -E ./test-infra/e2e/provision/init.sh
 ```
 
-### Once the `gitea/gitea-0` and `gitea/gitea-postgresql-0` starts in Nephio, we need to perform:
+<br></br>
+> **IMPORTANT:** After running `init.sh`, we need to change files permission under `nephio` directory. \
+> keep monitor starting `gitea/gitea-0` and `gitea/gitea-postgresql-0`, then change permission. \
+> Otherwilse, the Nephio will get stuck while installing.
+
+###  keep monitoring starting pods:
+```bash
+# monitor with watch command
+watch -n 1 kubectl get pods -n gitea
+```
+
+### Once the `gitea/gitea-0` and `gitea/gitea-postgresql-0` starts in Nephio, change permissions:
 ```bash
 # change home directory Path to your username!
-
 sudo chmod 777 /home/[User]/nephio -R # change here to PV's hostPath
 ```
-### Otherwilse, the Nephio will get stuck while installing.
 
+<br></br>
 ---
 |Before|Next|
 |--|--|
