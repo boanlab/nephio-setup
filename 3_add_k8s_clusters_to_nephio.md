@@ -168,7 +168,7 @@ metadata: # kpt-merge: config-management-system/regional
 spec:
   sourceFormat: unstructured
   git:
-    repo: http://172.18.0.120:3000/nephio/regional.git # change gitea repo ip address
+    repo: http://172.18.0.200:3000/nephio/regional.git # change gitea repo ip address
     branch: main
     auth: token
     secretRef:
@@ -243,20 +243,20 @@ Also, check if `root-reconciler` can actually access the gitea properly by:
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
 kubectl logs -n config-management-system root-reconciler-regional-79949ff68-r5jvs -c git-sync
 INFO: detected pid 1, running init handler
-I0415 04:31:40.264048      12 main.go:1101] "level"=1 "msg"="setting up git credential store"
+I0415 04:31:40.264048 12 main.go:1101] "level"=1 "msg"="setting up git credential store"
 ...
-I0415 05:50:31.188928      12 main.go:585] "level"=1 "msg"="next sync" "wait_time"=15000000000
-I0415 05:50:46.194475      12 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/rev" "cmd"="git rev-parse HEAD"
-I0415 05:50:46.198248      12 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/rev" "cmd"="git ls-remote -q http://172.18.0.200:3000/nephio/regional.git refs/heads/main"
-I0415 05:50:46.232708      12 main.go:1065] "level"=1 "msg"="no update required" "rev"="HEAD" "local"="059047c546d8c944a3bca69c1c03e81fb9a52d14" "remote"="059047c546d8c944a3bca69c1c03e81fb9a52d14"
-I0415 05:50:46.232790      12 main.go:585] "level"=1 "msg"="next sync" "wait_time"=15000000000
+I0415 05:50:31.188928 12 main.go:585] "level"=1 "msg"="next sync" "wait_time"=15000000000
+I0415 05:50:46.194475 12 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/rev" "cmd"="git rev-parse HEAD"
+I0415 05:50:46.198248 12 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/rev" "cmd"="git ls-remote -q http://172.18.0.200:3000/nephio/regional.git refs/heads/main"
+I0415 05:50:46.232708 12 main.go:1065] "level"=1 "msg"="no update required" "rev"="HEAD" "local"="059047c546d8c944a3bca69c1c03e81fb9a52d14" "remote"="059047c546d8c944a3bca69c1c03e81fb9a52d14"
+I0415 05:50:46.232790 12 main.go:585] "level"=1 "msg"="next sync" "wait_time"=15000000000
 ```
 
 > If the message keeps coming out as if the target gitea address is not accessable, perform `curl` to the gitea service. If the gitea is stil down, restart the `metallb-system`'s daemonsets in `mgmt` cluster. There are some frequent occurances with the `metallb-system/speaker` daemonset not serving the gitea properly. In this case, restart the daemonset by:
-> ```bash
-> ##### -----=[ In mgmt cluster ]=----- ####
-> kubectl rollout restart daemonsets -n metallb-system
-> ```
+```bash
+##### -----=[ In mgmt cluster ]=----- ####
+kubectl rollout restart daemonsets -n metallb-system
+```
 > This will solve the issue and make the load balancer IP work again.
 
 If you seen all `edge01`, `edge02` and `regional` clusters having proper git-sync, you can proceed to to the Step 4.
