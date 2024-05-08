@@ -7,29 +7,49 @@ The test environment contains 4 servers:
 > Official Nephio GCP utilizes a single server with 8 vCPU and 8GB of RAM. \
 > However, we need more resources to properly set up Nephio and Free5gc directly on servers.
 
-> Note that you need to configure the following IP addresses depending on your environment.
+> **NOTE:** You need to configure the following IP addresses depending on your environment.
 
 |Type|Spec|K8s Cluster Name|IP Address|Pod CIDR|
 |--|--|--|--|--|
-|Nephio Mgmt|8 vCPU / 32GB RAM | `mgmt` | 172.18.0.3 | 10.120.0.0/16 |
-|Regional Cluster|8 vCPU / 8GB RAM | `regional` | 172.18.0.4 | 10.121.0.0/16 |
-|Edge01 Cluster|8 vCPU / 8GB RAM | `edge01` | 172.18.0.5 | 10.122.0.0/16 |
-|Edge02 Cluster|8 vCPU / 8GB RAM | `edge02` | 172.18.0.6 | 10.123.0.0/16 |
+|Nephio Mgmt|8 vCPU / 32GB RAM / 200GB | `mgmt` | 172.18.0.3 | 10.120.0.0/16 |
+|Regional Cluster|8 vCPU / 8GB RAM / 200GB | `regional` | 172.18.0.4 | 10.121.0.0/16 |
+|Edge01 Cluster|8 vCPU / 8GB RAM / 100GB | `edge01` | 172.18.0.5 | 10.122.0.0/16 |
+|Edge02 Cluster|8 vCPU / 8GB RAM / 100GB | `edge02` | 172.18.0.6 | 10.123.0.0/16 |
 
-When install in GCP, VPC settings are required, and the configured VPC network must be applied to the instance.
-To set up a VPC network, proceed in the following order.
-```
-1. VPC Network > CREATE VPC NETWORK
-2. In New Subnet, set the region to the same region as the instance and IP Range to 172.18.0.0/24, then press the create button.
-```
+### Set up VPC network for Nephio
 
-After creating a VPC network, apply the VPC Network to the instance through the following procedure.
-```
-1. Create Instance > Advanced Options > Networking > Network Interface
-2. Click 'Edit Network Interface', and select the created vpc network.
-3. Click Boot Disk and change it to Ubuntu.
-4. Click Create to create an instance.
-```
+Before creating the above instances (VMs) on GCP, you need to set up VPC and apply it to the instances.
+
+Proceed in the following order to set up a VPC Network.
+
+  1) Press CREATE button (VPC Network > CREATE VPC NETWORK)
+
+      ![CREATE_VPC_NETWORK](./resources/vpc_setting_1.png)
+
+2) Fill the required fields (VPC Name, Subnet Name, Region, IPv4 range) and press `CREATE` button
+
+    > **IMPORTANT:** When selecting a region, ensure it matches the region of the VMs to which the VPC Network will be applied.
+
+    ![WRITE_FIELDS](./resources/vpc_setting_2.png)
+
+3) To apply the VPC Network to instances, follow these steps.
+
+    (1) Compute Engine > CREATE INSTANCE
+
+      ![CREATE_INSTANCE](./resources/instance_setting_0.png)
+
+    (2) Write Instance name, Region, Spec
+
+    > **IMPORTANT:** When we select the region, we must select the same region as VPC Network.
+
+    (3) Press Boot disk > CHANGE and set Image, Size
+
+    > **IMPORTANT:** When we press Boot disk > CHANGE, set Image Ubuntu 22.04 x86-64
+
+    (4) Press Advanced options > Networking > Network interfaces and set VPC Network \
+    (5) Press `CREATE` button
+
+    ![WRITE_FIELDS](./resources/instance_setting_1.png)
 
 ## 1.2 Install kubernetes
 
@@ -40,6 +60,7 @@ We use the following versions to set up Nephio and Free5gc.
 - **CNI**: Kindnet
 
 ### Install Kubernetes with containerd
+
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
 
@@ -52,7 +73,7 @@ sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-# add Docker repository
+# add docker repository
 echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 # update the docker repo
@@ -88,8 +109,7 @@ sudo apt-get install -y kubelet kubeadm kubectl
 # exclude kubernetes packages from updates
 sudo apt-mark hold kubelet kubeadm kubectl
 ```
-
-### Setup config.yaml for each cluster
+### Create `config.yaml` file for each cluster
 
 Refer to the following yaml files.
 
@@ -141,7 +161,7 @@ Refer to the following yaml files.
   ```
 </details>
 
-### Initialize kubeadm
+### Initialize Kubernetes with kubeadm
 
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
@@ -175,7 +195,7 @@ kubectl get nodes
 
 ## 1.3 Install Packages
 
-Nephio test-infra utilizes Ansible with `kpt`, `porchctl` to deploy necessary packages.
+Nephio utilizes Ansible and kpt to deploy its packages.
 
 ### Install KPT
 
@@ -205,19 +225,22 @@ porchctl version
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
 
-# add GPG key
-sudo apt-get install -y ca-certificates gnupg
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
+# We have already added the GPG key and repository for Docker during the installation of Containerd,
+# so the following lines can be omitted.
 
-# add Docker repository
-echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+# add gpg key
+# sudo apt-get install -y ca-certificates gnupg
+# sudo install -m 0755 -d /etc/apt/keyrings
+# curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+# sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-# update the Docker repo
-sudo apt-get update
+# add docker repository
+# echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# install Docker
+# update the docker repo
+# sudo apt-get update
+
+# install docker
 sudo apt-get install -y docker-ce
 
 # add user to docker group
@@ -229,12 +252,12 @@ sudo chmod 666 /var/run/docker.sock
 
 ### Install Open vSwitch
 
-In the later steps, we need to connect SR Linux from `mgmt` to other clusters(i.e. `edge01`, `edge02` and `regional`). In order for multi-cluster connectivity, we will be using VXLAN with Open vSwitch.
+In subsequent steps, we will connect SR Linux (Service Router Linux) from the `mgmt` network to other clusters (`edge01`, `edge02` and `regional`). To achieve multi-cluster connectivity via SR Linux, we will employ VXLAN using Open vSwitch.
 
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
 
-# install Open vSwitch
+# install open vSwitch
 sudo apt-get install -y openvswitch-switch
 
 # install networking tools especially for ifconfig
@@ -250,18 +273,18 @@ wget https://github.com/free5gc/gtp5g/archive/refs/tags/v0.8.3.tar.gz
 tar xvfz v0.8.3.tar.gz
 cd gtp5g-0.8.3/
 sudo apt-get install gcc gcc-12 make
+
+# compile and build gtp5g module
 sudo make
 sudo make install
-lsmod | grep gtp # check if gtp module was correctly loaded
+lsmod | grep gtp
 ```
 
 ## 1.4 Prepare Nephio
 
-Nephio utilizes `gitea` that requires 2 hostPath PersistentVolumes. This was originally provisioned by `local-path-provisioner`, however since we are running on a bare-metal environment, we need to create these PersistentVolumes manually in the `mgmt` cluster.
+Nephio relies on `gitea`, which requires two hostPath PersistentVolumes (PVs). Originally, these were provisioned by `local-path-provisioner`. However, in this setup, we must manually create these PVs in the `mgmt` cluster because Nephio operates on a bare-metal environment.
 
 ```yaml
-# Change hostPath to install env user path
-
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -295,10 +318,6 @@ spec:
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-
-# create local paths
-mkdir -p ~/nephio/gitea/data-gitea-0
-mkdir -p ~/nephio/gitea/data-gitea-postgresql-0
 
 # modify gitea-pv.yaml
 sed -i 's/[USER]/$USER/g' gitea-pv.yaml
