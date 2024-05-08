@@ -29,7 +29,7 @@ Then run `init.sh` to setup Nephio R2 with optional packages as well.
 
 ```bash
 # clone codes from forked repository
-git clone https://github.com/[arbitrary_repo_name]/catalog.git
+git clone https://github.com/[Github_user_ID]/catalog.git
 
 # set env for edit
 GITEA_IP_ADDR=$(hostname -I | awk '{print $1}')
@@ -60,8 +60,8 @@ cd ..
 
 ```bash
 # using sed command, change repository name
-sed 's/free5gc/[forked repository name]/g' ./test-infra/e2e/provision/playbooks/roles/bootstrap/defaults/main.yaml
-sed 's/free5gc/[forked repository name]/g' ./test-infra/e2e/provision/playbooks/roles/install/defaults/main.yaml
+sed 's/free5gc/[Github_user_ID]/g' ./test-infra/e2e/provision/playbooks/roles/bootstrap/defaults/main.yaml
+sed 's/free5gc/[Github_user_ID]/g' ./test-infra/e2e/provision/playbooks/roles/install/defaults/main.yaml
 ```
 
 ### Run init script

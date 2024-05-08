@@ -12,6 +12,7 @@ In the `mgmt` cluster by using `porchctl`, register the `regional` cluster to th
 ##### -----=[ In mgmt cluster ]=----- ####
 
 # add regional cluster to nephio
+# hash value is the same regardless of the installation environment
 kubectl get repositories
 porchctl rpkg get --name nephio-workload-cluster
 porchctl rpkg clone -n default catalog-infra-capi-b0ae9512aab3de73bbae623a3b554ade57e15596 --repository mgmt regional
@@ -71,7 +72,9 @@ gitea-postgresql      ClusterIP      10.104.192.111   <none>         5432/TCP   
 gitea-postgresql-hl   ClusterIP      None             <none>         5432/TCP                      7d3h
 ```
 
-Find the nodePort which is mapped to the port 3000. For example, in our case, the `gitea` web interface can be accessable by `http://mgmt_ip_address:30104`.
+Find the nodePort port which is mapped to the port 3000. 
+
+For example, in our case, the `gitea` web interface can be accessable by `http://[mgmt_IP_address]:30104`.
 
 ### Login gitea service
 
@@ -88,7 +91,11 @@ Once logged in, visit repository `nephio/mgmt` and modify the following files:
 
 ![gitea login page](./pic/gitea_repo.png)
 
-### Replace to the gitea repository service address
+Except for the name, content in files is the same. 
+
+We need to change the repo URL in the file to gitea_service_address.
+
+### Replace address to gitea repository service address
 
 ```yaml
 # change gitea service address
@@ -128,6 +135,7 @@ mgmt                        git    Package   true         True    http://172.18.
 mgmt-staging                git    Package   false        True    http://172.18.0.200:3000/nephio/mgmt-staging.git
 regional                    git    Package   true         True    http://172.18.0.200:3000/nephio/regional.git
 ```
+
 If the addresses were changed to the designated gitea service's IP, the `READY` field will be changed to `True`. 
 
 > **NOTE:** Even if the repository addresses were changed in the `gitea`, this does take some extra time to be applied in to the Nephio system. If you do not see the status as `True`, wait a few more minutes before it activates.
@@ -144,14 +152,14 @@ In order for `regional`, edge clusters to join Nephio, they require `secrets` to
 ##### -----=[ In mgmt cluster ]=----- ####
 kubectl get secrets --all-namespaces
 
-NAMESPACE                           NAME                                              TYPE                       DATA   AGE
+NAMESPACE               NAME                                              TYPE                       DATA   AGE
 ...
-default                             edge01-access-token-configsync                    kubernetes.io/basic-auth   3      6d21h
-default                             edge01-access-token-porch                         kubernetes.io/basic-auth   3      6d21h
-default                             edge02-access-token-configsync                    kubernetes.io/basic-auth   3      6d21h
-default                             edge02-access-token-porch                         kubernetes.io/basic-auth   3      6d21h
-default                             regional-access-token-configsync                  kubernetes.io/basic-auth   3      6d22h
-default                             regional-access-token-porch                       kubernetes.io/basic-auth   3      6d22h
+default                 edge01-access-token-configsync                    kubernetes.io/basic-auth   3      6d21h
+default                 edge01-access-token-porch                         kubernetes.io/basic-auth   3      6d21h
+default                 edge02-access-token-configsync                    kubernetes.io/basic-auth   3      6d21h
+default                 edge02-access-token-porch                         kubernetes.io/basic-auth   3      6d21h
+default                 regional-access-token-configsync                  kubernetes.io/basic-auth   3      6d22h
+default                 regional-access-token-porch                       kubernetes.io/basic-auth   3      6d22h
 ...
 ```
 
@@ -192,19 +200,19 @@ kind: Secret
 ...
 ```
 
-### Send secrets to other clusters
+### Copy secrets to other clusters
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 
 # send secret to regional cluster
-scp regional-secret.yaml [User]@[regional_ip_address]:/home/[regional_user]
+scp regional-secret.yaml [regional_user]@[regional_ip_address]:/home/[regional_user]
 
 # send secret to edge01 cluster
-scp edge01-secret.yaml [User]@[edge01_ip_address]:/home/[edge01_user]
+scp edge01-secret.yaml [regional_user]@[edge01_ip_address]:/home/[edge01_user]
 
 # send secret to edge02 cluster
-scp edge02-secret.yaml [User]@[edge02_ip_address]:/home/[edge02_user]
+scp edge02-secret.yaml [regional_ser]@[edge02_ip_address]:/home/[edge02_user]
 ```
 
 ### Install `configsync` in the clusters joining Nephio
@@ -228,7 +236,7 @@ kubectl apply -f [secrets_filename].yaml
 ```
 After apply secrets, we need to install `rootsync` in the clusters joining Nephio. 
 
-in order for `rootsync` to know the target gitea service that the cluster needs to access, we need to modify `rootsync/rootsync.yaml`
+In order for `rootsync` to know the target gitea service that the cluster needs to access, we need to modify `rootsync/rootsync.yaml`
 
 ### Setup rootsync.yaml
 

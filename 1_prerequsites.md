@@ -19,7 +19,7 @@ When install in GCP, VPC settings are required, and the configured VPC network m
 To set up a VPC network, proceed in the following order.
 ```
 1. VPC Network > CREATE VPC NETWORK
-2. In New Subnet, set the region to the same region as the instance and IP Range to 172.18.0.0/24, then press the create button.
+2. In new subnet, set region and IP address range then press the create button.
 ```
 
 After creating a VPC network, apply the VPC Network to the instance through the following procedure.
@@ -39,6 +39,7 @@ We use the following versions to set up Nephio and Free5gc.
 - **CNI**: Kindnet
 
 ### Install Kubernetes with containerd
+
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
 
@@ -51,7 +52,7 @@ sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-# add Docker repository
+# add docker repository
 echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 # update the docker repo
@@ -87,7 +88,7 @@ sudo apt-get install -y kubelet kubeadm kubectl
 # exclude kubernetes packages from updates
 sudo apt-mark hold kubelet kubeadm kubectl
 ```
-### Setup config.yaml for each cluster
+### Create `config.yaml` file for each cluster
 
 <details>
   <summary>mgmt_config.yaml</summary>
@@ -172,7 +173,7 @@ np-m   Ready    control-plane   7d1h   v1.27.12
 
 ## 1.3 Install Packages
 
-Nephio test-infra utilizes Ansible with `kpt`, `porchctl` to deploy necessary packages.
+Nephio utilizes Ansible and kpt to deploy its packages.
 
 ### Install KPT
 
@@ -202,19 +203,20 @@ porchctl version
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
 
-# add GPG key
+# add gpg key
+# We have already added gpg key and docker repository
 sudo apt-get install -y ca-certificates gnupg
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-# add Docker repository
+# add docker repository
 echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# update the Docker repo
+# update the docker repo
 sudo apt-get update
 
-# install Docker
+# install docker
 sudo apt-get install -y docker-ce
 
 # add user to docker group
@@ -231,7 +233,7 @@ In the later steps, we need to connect SR Linux from `mgmt` to other clusters(i.
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
 
-# install Open vSwitch
+# install open vSwitch
 sudo apt-get install -y openvswitch-switch
 
 # install networking tools especially for ifconfig
@@ -247,9 +249,11 @@ wget https://github.com/free5gc/gtp5g/archive/refs/tags/v0.8.3.tar.gz
 tar xvfz v0.8.3.tar.gz
 cd gtp5g-0.8.3/
 sudo apt-get install gcc gcc-12 make
+
+# compile and build gtp5g module
 sudo make
 sudo make install
-lsmod | grep gtp # check if gtp module was correctly loaded
+lsmod | grep gtp
 ```
 
 ## 1.4 Prepare Nephio
@@ -292,10 +296,6 @@ spec:
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-
-# create local paths
-mkdir -p ~/nephio/gitea/data-gitea-0
-mkdir -p ~/nephio/gitea/data-gitea-postgresql-0
 
 # modify gitea-pv.yaml
 sed -i 's/[USER]/$USER/g' gitea-pv.yaml
