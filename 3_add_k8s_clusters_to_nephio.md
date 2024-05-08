@@ -219,6 +219,7 @@ scp edge02-secret.yaml [regional_ser]@[edge02_ip_address]:/home/[edge02_user]
 
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
+
 kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/nephio/core/configsync@main
 kpt fn render configsync
 kpt live init configsync
@@ -232,6 +233,7 @@ This will automatically install `configsync`. and next, apply secrets in cluster
 
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
+
 kubectl apply -f [secrets_filename].yaml
 ```
 After apply secrets, we need to install `rootsync` in the clusters joining Nephio. 
@@ -326,7 +328,9 @@ kpt live apply rootsync --reconcile-timeout=15m --output=table
 
 ``` bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
+
 kubectl get pods -n config-management-system
+
 NAME                                          READY   STATUS    RESTARTS       AGE
 config-management-operator-6946b77565-wxwvd   1/1     Running   0              6d20h
 reconciler-manager-5b5d8557-wf69f             2/2     Running   0              6d20h
@@ -337,7 +341,9 @@ root-reconciler-regional-79949ff68-r5jvs      4/4     Running   87 (78m ago)   6
 
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
+
 kubectl logs -n config-management-system root-reconciler-regional-79949ff68-r5jvs -c git-sync
+
 INFO: detected pid 1, running init handler
 I0415 hh:mm:ss 12 main.go:1101] "level"=1 "msg"="setting up git credential store"
 ...

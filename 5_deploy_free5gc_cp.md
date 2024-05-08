@@ -1,4 +1,4 @@
-# 5. Deploying Free5gc-cp
+# 5. Deploy Free5gc-cp
 Now, deploy Free5gc-CP as usual: https://docs.nephio.org/docs/guides/user-guides/exercise-1-free5gc/#step-4-deploy-free5gc-control-plane-functions. 
 
 The Nephio webui will be running in `172.18.0.132:7007` (for example). 
@@ -9,7 +9,7 @@ The regional cluster utilizes host path PV to store data for `mongodb`. Create a
 ```yaml
 ##### -----=[ In regional cluster ]=----- ####
 
-# change home directory Path to your username!
+# change home directory Path to your username
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -29,6 +29,7 @@ spec:
 
 ```bash
 ##### -----=[ In regional cluster ]=----- ####
+
 kubectl apply -f mongodb-pv.yaml
 ```
 
@@ -38,15 +39,16 @@ Also, just like the `gitea` PVs in `mgmt` cluster, we need to manually `chmod` t
 
 ```bash
 ##### -----=[ In regional clusters ]=----- ####
-# change home directory Path to your username!
 
-sudo chmod 777 -R /home/[User]/nephio/mongodb
+# change home directory Path to your username
+sudo chmod 777 -R ~/nephio/mongodb
  ```
 
 ### Deploy free5gc operators
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
+
 kubectl apply -f test-infra/e2e/tests/free5gc/004-free5gc-operator.yaml
 ```
 
@@ -54,6 +56,7 @@ kubectl apply -f test-infra/e2e/tests/free5gc/004-free5gc-operator.yaml
 
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
+
 kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/nephio/core/workload-crds@main
 kpt fn render workload-crds
 kpt live init workload-crds

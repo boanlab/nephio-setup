@@ -86,7 +86,7 @@ Once the `gitea/gitea-0` and `gitea/gitea-postgresql-0` starts in the `gitea` na
 
 ```bash
 # change file permission in PV's hostpath
-sudo chmod 777 /home/[User]/nephio -R 
+sudo chmod 777 ~/nephio -R 
 ```
 
 <br></br>

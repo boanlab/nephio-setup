@@ -1,5 +1,9 @@
 # 4. Configure Network Topology
-Nephio utilizes SR Linux to interconnect clusters. However, since we are using multiple servers, we need to connect them as if they were connected. Therefore, we will be using OVS to connect between SR Linux to each clusters.
+Nephio utilizes SR Linux to interconnect clusters. 
+
+> SR Linux is an open source network operating system created by Nokia.
+
+However, since we are using multiple servers, we need to connect them as if they were connected. Therefore, we will be using OVS(Open vSwitch) to connect between SR Linux to each clusters.
 
 ## 4.1 Setup Containerlab
 
@@ -27,13 +31,15 @@ topology:
     - endpoints: ["leaf:e1-3", "host:sr-e2"]
 ```
 
-> This will deploy a SR Linux having `e1-1`, `e1-2`, `e1-3` and those are connected to host's `sr-r`, `'sr-e1` and `sr-e1`. \
-> Also, we are going to connect each interfaces to a ovs tunnel that is connected to the remote server using VXLAN. 
+ This will deploy a SR Linux having `e1-1`, `e1-2`, `e1-3` and those are connected to host's `sr-r`, `'sr-e1` and `sr-e1`.
+
+ Also, we are going to connect each interfaces to a ovs tunnel that is connected to the remote server using VXLAN. 
 
 ### Deploy topology using containerlab
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
+
 sudo containerlab deploy --topo topology.yaml
 ```
 
@@ -58,7 +64,7 @@ sudo ifconfig br-tun-e2 up
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 
-# change to regional, edge01, edge02 ip
+# change to regional, edge01, edge02 IP address
 sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=172.18.0.121 options:dst_port=48317 options:tag=321
 sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=172.18.0.122 options:dst_port=48318 options:tag=321
 sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=172.18.0.123 options:dst_port=48319 options:tag=321
@@ -123,6 +129,7 @@ sudo ifconfig eth1.6 up
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
+
 sudo ovs-vsctl add-port br-tun-r sr-r
 sudo ovs-vsctl add-port br-tun-e1 sr-e1
 sudo ovs-vsctl add-port br-tun-e2 sr-e2
@@ -138,7 +145,7 @@ kubectl apply -f test-infra/e2e/tests/free5gc/002-network.yaml
 kubectl apply -f test-infra/e2e/tests/free5gc/002-secret.yaml
 ```
 
-### Setup `RawTopology`
+### Create `RawTopology` file
 
 ```yaml
 ##### -----=[ In mgmt cluster ]=----- ####
@@ -179,7 +186,7 @@ spec:
     - { nodeName: edge02, interfaceName: eth1}
 ```
 
-### Create topology
+### Apply topology with yaml file
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
