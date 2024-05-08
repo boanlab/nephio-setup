@@ -4,6 +4,10 @@
 
 ### Add `regional` cluster to Nephio
 
+In the `mgmt` cluster by using `porchctl`, register the `regional` cluster to the Nephio system.
+
+> **NOTE:** As of Nephio R2, the `nephio-workload-cluster` has the name `mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868`, this might be changed in the future when a new release comes out.
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 
@@ -20,6 +24,8 @@ porchctl rpkg approve -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868
 
 ### Add `edge01` and `edge02` clusters to Nephio:
 
+In the previous step, we have setup the `regional` cluster. However, till now, the Nephio will not recognize the clusters `edge01` and `edge02`. You can register new clusters using the following command:
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 
@@ -28,6 +34,8 @@ kubectl apply -f test-infra/e2e/tests/free5gc/002-edge-clusters.yaml
 ```
 
 ### Check for repositories
+
+Once the Nephio approves `regional`, `edge01` and `edge02` clusters, it will assign git repositories in the `gitea` service. We can also check if the repositories were successfully set up and registered by the Nephio system using the following commands:
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
@@ -45,11 +53,13 @@ mgmt-staging                git    Package   false        True     http://172.18
 regional                    git    Package   true         False    http://172.18.0.200:3000/nephio/regional.git
 ```
 
-> **IMPORTANT:** As you can see, the repositories are directing to wrong gitea service port which is `http://[ip_addr]:3000`. \
-> We need modify addresses to gitea service `nodePort` address by visiting the gitea service. \
-> the default login credentials are `nephio` / `secret`
+> **IMPORTANT:** If you do not see `regional`, `edge01` and `edge02` all three clusters, the Nephio has not yet setup the clusters. Therefore, please wait a few more minutes before all repositories appear. 
 
 ### Check gitea service address
+
+As you can see, the repositories are directing to the wrong `gitea` service address which is set to an irrelevant IP address. We need to modify the repository addresses stored in the `gitea` manually to the actual `gitea` service address.
+
+You can achieve this by modifying the repository address stored in the `gitea` manually using the web interface. First, check your `gitea` Service's web interface `nodePort` which is accessable from the external network by:
 
 ```bash
 kubectl get svc -n gitea
@@ -61,11 +71,14 @@ gitea-postgresql      ClusterIP      10.104.192.111   <none>         5432/TCP   
 gitea-postgresql-hl   ClusterIP      None             <none>         5432/TCP                      7d3h
 ```
 
-nodePort is 30104. In this case, service address is `http://[mgmt_ip_address]:30104`
+Find the nodePort which is mapped to the port 3000. For example, in our case, the `gitea` web interface can be accessable by `http://mgmt_ip_address:30104`.
 
 ### Login gitea service
 
 ![gitea login page](./pic/gitea_login.png)
+
+> **NOTE:** As of Nephio R2, the default login credentials are 
+set as ID: `nephio`, PW: `secret`.
 
 Once logged in, visit repository `nephio/mgmt` and modify the following files:
 
@@ -75,10 +88,9 @@ Once logged in, visit repository `nephio/mgmt` and modify the following files:
 
 ![gitea login page](./pic/gitea_repo.png)
 
-### Replace to the gitea's service address
+### Replace to the gitea repository service address
 
 ```yaml
-
 # change gitea service address
 apiVersion: config.porch.kpt.dev/v1alpha1
 kind: Repository
@@ -118,11 +130,13 @@ regional                    git    Package   true         True    http://172.18.
 ```
 If the addresses were changed to the designated gitea service's IP, the `READY` field will be changed to `True`. 
 
-If this step was successfully performed, the edge and regional clusters can Join without any problem.
+> **NOTE:** Even if the repository addresses were changed in the `gitea`, this does take some extra time to be applied in to the Nephio system. If you do not see the status as `True`, wait a few more minutes before it activates.
+
+If this step was successfully finished, the `regional`, `edge01` and `edge02` clusters can join the Nephio system without any problem.
 
 ## 3.2 Clusters Joining Nephio
 
-In order for regional, edge clusters to join Nephio, they require `secrets` to gain access to `mgmt` cluster's gitea service. The secrets are automatically generated in step 3.1
+In order for `regional`, edge clusters to join Nephio, they require `secrets` to gain access to `mgmt` cluster's gitea service. The secrets are automatically generated in step 3.1
 
 ### Check secrets 
 

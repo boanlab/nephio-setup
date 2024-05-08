@@ -39,8 +39,7 @@ We use the following versions to set up Nephio and Free5gc.
 - **CRI**: Containerd
 - **CNI**: Kindnet
 
-### Install Kubernetes with Containerd
-
+### Install Kubernetes with containerd
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
 
@@ -68,7 +67,7 @@ sudo containerd config default | sudo tee /etc/containerd/config.toml
 sudo sed -i "s/SystemdCgroup = false/SystemdCgroup = true/g" /etc/containerd/config.toml
 sudo systemctl restart containerd
 
-# add the key for kubernetes repo
+# add the key for Kubernetes repo
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
 # add sources.list.d
@@ -113,7 +112,7 @@ Refer to the following yaml files.
   apiVersion: kubeadm.k8s.io/v1beta3
   kind: ClusterConfiguration
   networking:
-    podSubnet: "10.121.0.0/16" 
+    podSubnet: "10.121.0.0/16"
   clusterName: "regional"
   ```
 </details>
@@ -125,7 +124,7 @@ Refer to the following yaml files.
   apiVersion: kubeadm.k8s.io/v1beta3
   kind: ClusterConfiguration
   networking:
-    podSubnet: "10.122.0.0/16" 
+    podSubnet: "10.122.0.0/16"
   clusterName: "edge01"
   ```
 </details>
@@ -137,7 +136,7 @@ Refer to the following yaml files.
   apiVersion: kubeadm.k8s.io/v1beta3
   kind: ClusterConfiguration
   networking:
-    podSubnet: "10.123.0.0/16" 
+    podSubnet: "10.123.0.0/16"
   clusterName: "edge02"
   ```
 </details>
@@ -176,7 +175,7 @@ kubectl get nodes
 
 ## 1.3 Install Packages
 
-Nephio utilizes Ansible and kpt to deploy its packages.
+Nephio test-infra utilizes Ansible with `kpt`, `porchctl` to deploy necessary packages.
 
 ### Install KPT
 
@@ -212,16 +211,16 @@ sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-# add docker repository
+# add Docker repository
 echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# update the docker repo
+# update the Docker repo
 sudo apt-get update
 
-# install docker
+# install Docker
 sudo apt-get install -y docker-ce
 
-# add user to docker
+# add user to docker group
 sudo usermod -aG docker $USER
 
 # bypass to run docker command
@@ -230,13 +229,15 @@ sudo chmod 666 /var/run/docker.sock
 
 ### Install Open vSwitch
 
+In the later steps, we need to connect SR Linux from `mgmt` to other clusters(i.e. `edge01`, `edge02` and `regional`). In order for multi-cluster connectivity, we will be using VXLAN with Open vSwitch.
+
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
 
 # install Open vSwitch
 sudo apt-get install -y openvswitch-switch
 
-# install networking tools (e.g., ifconfig)
+# install networking tools especially for ifconfig
 sudo apt-get install -y net-tools
 ```
 
@@ -251,12 +252,12 @@ cd gtp5g-0.8.3/
 sudo apt-get install gcc gcc-12 make
 sudo make
 sudo make install
-lsmod | grep gtp
+lsmod | grep gtp # check if gtp module was correctly loaded
 ```
 
 ## 1.4 Prepare Nephio
 
-Nephio utilizes `gitea` that needs 2 hostPath PVs; thus, create these PVs in `mgmt` cluster.
+Nephio utilizes `gitea` that requires 2 hostPath PersistentVolumes. This was originally provisioned by `local-path-provisioner`, however since we are running on a bare-metal environment, we need to create these PersistentVolumes manually in the `mgmt` cluster.
 
 ```yaml
 # Change hostPath to install env user path
