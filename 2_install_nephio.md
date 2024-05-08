@@ -33,8 +33,8 @@ git clone https://github.com/[Github_user_ID]/catalog.git
 
 # set env for edit
 GITEA_IP_ADDR=$(hostname -I | awk '{print $1}')
-SUBNET_IP_RANGE=[subnet_ip_range]
-NEPHIO_WEBUI_ADDR=[nephio_webui_addr]
+SUBNET_IP_RANGE=[subnet_IP_address_range]
+NEPHIO_WEBUI_ADDR=[nephio_webui_address]
 
 # using sed command, change ip address, ip ranges
 sed 's/172.18.0.200/$GITEA_IP_ADDR/g' catalog/distros/gcp/nephio-mgmt/nephio-controllers/app/deployment-token-controller.yaml

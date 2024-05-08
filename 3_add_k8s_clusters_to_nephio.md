@@ -206,13 +206,13 @@ kind: Secret
 ##### -----=[ In mgmt cluster ]=----- ####
 
 # send secret to regional cluster
-scp regional-secret.yaml [regional_user]@[regional_ip_address]:/home/[regional_user]
+scp regional-secret.yaml [regional_user]@[regional_IP_address]:/home/[regional_user]
 
 # send secret to edge01 cluster
-scp edge01-secret.yaml [regional_user]@[edge01_ip_address]:/home/[edge01_user]
+scp edge01-secret.yaml [edge01_user]@[edge01_IP_address]:/home/[edge01_user]
 
 # send secret to edge02 cluster
-scp edge02-secret.yaml [regional_ser]@[edge02_ip_address]:/home/[edge02_user]
+scp edge02-secret.yaml [edge02_user]@[edge02_IP_address]:/home/[edge02_user]
 ```
 
 ### Install `configsync` in the clusters joining Nephio

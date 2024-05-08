@@ -10,25 +10,45 @@ The test environment contains 4 servers:
 
 |Type|Spec|K8s Cluster Name|IP Address|Pod CIDR|
 |--|--|--|--|--|
-|Nephio Mgmt|8 vCPU / 32GB RAM | `mgmt` | 172.18.0.3 | 10.120.0.0/16 |
-|Regional Cluster|8 vCPU / 8GB RAM | `regional` | 172.18.0.4 | 10.121.0.0/16 |
-|Edge01 Cluster|8 vCPU / 8GB RAM | `edge01` | 172.18.0.5 | 10.122.0.0/16 |
-|Edge02 Cluster|8 vCPU / 8GB RAM | `edge02` | 172.18.0.6 | 10.123.0.0/16 |
+|Nephio Mgmt|8 vCPU / 32GB RAM / 200GB | `mgmt` | 172.18.0.3 | 10.120.0.0/16 |
+|Regional Cluster|8 vCPU / 8GB RAM / 200GB | `regional` | 172.18.0.4 | 10.121.0.0/16 |
+|Edge01 Cluster|8 vCPU / 8GB RAM / 100GB | `edge01` | 172.18.0.5 | 10.122.0.0/16 |
+|Edge02 Cluster|8 vCPU / 8GB RAM / 100GB | `edge02` | 172.18.0.6 | 10.123.0.0/16 |
 
-When install in GCP, VPC settings are required, and the configured VPC network must be applied to the instance.
-To set up a VPC network, proceed in the following order.
-```
-1. VPC Network > CREATE VPC NETWORK
-2. In new subnet, set region and IP address range then press the create button.
-```
+When install in GCP, VPC settings are required, and the configured VPC Network must be applied to the instance.
 
-After creating a VPC network, apply the VPC Network to the instance through the following procedure.
-```
-1. Create Instance > Advanced Options > Networking > Network Interface
-2. Click 'Edit Network Interface', and select the created vpc network.
-3. Click Boot Disk and change it to Ubuntu.
-4. Click Create to create an instance.
-```
+To set up a VPC Network, proceed in the following order.
+
+> 1 - VPC Network > CREATE VPC NETWORK \
+> 2 - Write VPC name, Subnet name, Region, IPv4 range and press `CREATE` button
+
+### Press CREATE button
+
+![CREATE_VPC_NETWORK](./pic/vpc_setting_1.png)
+
+### Write the required fields
+
+> **IMPORTANT:** When you select the region, you must select the same region as the instance to which you want to apply the VPC Network.
+
+![WRITE_FIELDS](./pic/vpc_setting_2.png)
+
+After creating a VPC Network, apply the VPC Network to the instance through the following procedure.
+
+> 1 - Compute Engine > CREATE INSTANCE \
+> 2 - Write Instance name, Region, Spec \
+> 3 - Press Boot disk > CHANGE and set Image, Size \
+> 4 - Press Advanced options > Networking > Network interfaces and set VPC Network and press `CREATE` button
+
+### Press CREATE button
+
+> **IMPORTANT:** When you select the region, you must select the same region as VPC Network. \
+> **IMPORTANT:** When you press Boot disk > CHANGE, set Image Ubuntu 22.04 x86-64
+
+![CREATE_INSTANCE](./pic/instance_setting_0.png)
+
+### Write the required fields
+
+![WRITE_FIELDS](./pic/instance_setting_1.png)
 
 ## 1.2 Install kubernetes
 
