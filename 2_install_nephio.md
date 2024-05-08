@@ -23,7 +23,7 @@ export ANSIBLE_CMD_EXTRA_VAR_LIST="k8s.context=kubernetes-admin@mgmt kind.enable
 > 2 - Clone repository and change the 172.18.0.200 IP and 172.18.0.0/24 IP range strings. then commit changed codes\
 > 3 - Among the codes in the downloaded test-infra directory, change the string written with the https://github.com/nephio-project/catalog.git address to the cloned repository address.
 
-### Change ip address, ip range in catalog (task 2)
+### Change ip address, ranges in catalog (task 2)
 
 ```bash
 # clone codes from forked repository
@@ -54,7 +54,7 @@ git push
 cd ..
 ```
 
-### Change catalog path in test-infra (task 2)
+### Change catalog path in test-infra (task 3)
 
 ```bash
 # using sed command, change repository name
@@ -82,8 +82,8 @@ watch -n 1 kubectl get pods -n gitea
 ### Once the `gitea/gitea-0` and `gitea/gitea-postgresql-0` starts in Nephio, change permissions:
 
 ```bash
-# change home directory Path to your username!
-sudo chmod 777 /home/[User]/nephio -R # change here to PV's hostPath
+# change file permission in PV's hostpath
+sudo chmod 777 /home/[User]/nephio -R 
 ```
 
 <br></br>

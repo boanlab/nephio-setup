@@ -145,22 +145,19 @@ The clusters need to have those secrets registered in their clusters.
 
 For example, if `regional` cluster was to gain access to `mgmt`'s gitea service, the `regional` shall also have the `regional-access-token-configsync`. 
 
-### Send secrets to other clusters
+### Save secrets
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 
-# send secret to regional cluster
+# save regional secrets to file
 kubectl get secret regional-access-token-configsync -o yaml > regional-secret.yaml
-scp regional-secret.yaml [User]@[regional_ip_address]:/home/[regional_user]
 
-# send secret to edge01 cluster
+# save edge01 secrets to file
 kubectl get secret edge01-access-token-configsync -o yaml > edge01-secret.yaml
-scp edge01-secret.yaml [User]@[edge01_ip_address]:/home/[edge01_user]
 
-# send secret to edge02 cluster
+# save edge02 secrets to file
 kubectl get secret edge02-access-token-configsync -o yaml > edge02-secret.yaml
-scp edge02-secret.yaml [User]@[edge02_ip_address]:/home/[edge02_user]
 ```
 
 ### Change secret file
@@ -181,6 +178,21 @@ kind: Secret
 ...
 ```
 
+### Send secrets to other clusters
+
+```bash
+##### -----=[ In mgmt cluster ]=----- ####
+
+# send secret to regional cluster
+scp regional-secret.yaml [User]@[regional_ip_address]:/home/[regional_user]
+
+# send secret to edge01 cluster
+scp edge01-secret.yaml [User]@[edge01_ip_address]:/home/[edge01_user]
+
+# send secret to edge02 cluster
+scp edge02-secret.yaml [User]@[edge02_ip_address]:/home/[edge02_user]
+```
+
 ### Install `configsync` in the clusters joining Nephio
 
 ```bash
@@ -198,7 +210,7 @@ This will automatically install `configsync`. and next, apply secrets in cluster
 
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
-kubectl apply -f regional-secret.yaml  # edge01-secret.yaml, edge02-secret.yaml in other clusters
+kubectl apply -f [secrets_filename].yaml
 ```
 After apply secrets, we need to install `rootsync` in the clusters joining Nephio. 
 

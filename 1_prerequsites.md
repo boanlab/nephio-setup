@@ -1,5 +1,7 @@
 # 1. Prerequsites
+
 ## 1.1 Servers
+
 The test environment contains 4 servers:
 > Official Nephio GCP utilizes a single server with 8 vCPU and 8GB of RAM. \
 > However, we need more resources to properly set up Nephio and Free5gc directly on servers.
@@ -37,6 +39,7 @@ We use the following versions to set up Nephio and Free5gc.
 - **CNI**: Kindnet
 
 ### Install Kubernetes with Containerd
+
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
 
