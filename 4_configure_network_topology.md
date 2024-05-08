@@ -3,7 +3,9 @@ Nephio utilizes SR Linux to interconnect clusters.
 
 > SR Linux is an open source network operating system created by Nokia.
 
-However, since we are using multiple servers, we need to connect them as if they were connected. Therefore, we will be using OVS(Open vSwitch) to connect between SR Linux to each clusters.
+However, since we are using multiple servers, we need to connect them as if they were connected. 
+
+Therefore, we will be using OVS(Open vSwitch) to connect between SR Linux to each clusters.
 
 ## 4.1 Setup Containerlab
 
@@ -190,6 +192,7 @@ spec:
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
+
 kubectl create -f topo.yaml
 ```
 
