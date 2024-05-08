@@ -24,7 +24,7 @@ kubectl apply -f test-infra/e2e/tests/free5gc/007-edge01-ueransim.yaml
 
 This creates a `ueransim` namespace in `edge01` with two deployments `ueransimgnb` (gNodeB) and `ueransimue` (UE).
 
-### Check ueransimnb & ueransimue
+### Check `ueransimnb` & `ueransimue`
 
 ```bash
 ##### -----=[ In edge01 cluster ]=----- ####

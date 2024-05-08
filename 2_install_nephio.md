@@ -17,7 +17,6 @@ export NEPHIO_USER=$USER
 export ANSIBLE_CMD_EXTRA_VAR_LIST="k8s.context=kubernetes-admin@mgmt kind.enabled=false host_min_vcpu=4 host_min_cpu_ram=8"
 ```
 
-<br></br>
 > **IMPORTANT:** Before running the init.sh script, the IP addresses of installation components, must be changed to  test environment(gitea and nephio-webui). \
 > For this purpose, the following three tasks need to be performed. \
 > 1 - Fork https://github.com/nephio-project/catalog.git repository to a arbitrary git repository. \
@@ -69,7 +68,6 @@ sed 's/free5gc/[forked repository name]/g' ./test-infra/e2e/provision/playbooks/
 sudo -E ./test-infra/e2e/provision/init.sh
 ```
 
-<br></br>
 > **IMPORTANT:** After running `init.sh`, we need to change files permission under `nephio` directory. \
 > keep monitor starting `gitea/gitea-0` and `gitea/gitea-postgresql-0`, then change permission. \
 > Otherwilse, the Nephio will get stuck while installing.
