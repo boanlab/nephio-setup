@@ -3,8 +3,8 @@ Now, deploy Free5gc-CP as usual: https://docs.nephio.org/docs/guides/user-guides
 
 ### The regional cluster utilizes host path PV to store data for `mongodb`. Create a new PV in `regional` cluster by:
 ```yaml
-# change home directory Path to your username!
 
+# change home directory Path to your username!
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -21,12 +21,14 @@ spec:
 ```
 
 ### Then apply pv files as follows:
+
 ```bash
 ##### -----=[ In regional cluster ]=----- ####
 kubectl apply -f mongodb-pv.yaml
 ```
 
 ### Also, just like the `gitea` PVs in `mgmt` cluster, we need to manually `chmod` the local directory. Otherwise, the `mongodb` will not setup.
+
 ```bash
 ##### -----=[ In regional clusters ]=----- ####
 # change home directory Path to your username!
@@ -34,14 +36,14 @@ kubectl apply -f mongodb-pv.yaml
 sudo chmod 777 -R /home/[User]/nephio/mongodb
  ```
 
-### Then deploy free5gc operators using the following command:
+### Deploy free5gc operators
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 kubectl apply -f test-infra/e2e/tests/free5gc/004-free5gc-operator.yaml
 ```
 
-### For worker culsters, install some more packages by:
+### Install other packages
 
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####

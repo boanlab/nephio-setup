@@ -23,7 +23,7 @@ porchctl rpkg approve -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 
-#add edge01, edge02 cluster to nephio using 002-edge-clusters.yaml file
+# add edge01, edge02 cluster to nephio
 kubectl apply -f test-infra/e2e/tests/free5gc/002-edge-clusters.yaml
 ```
 
@@ -32,7 +32,7 @@ kubectl apply -f test-infra/e2e/tests/free5gc/002-edge-clusters.yaml
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 
-#check repositories resource
+# check repositories resource
 kubectl get repositories
 
 NAME                        TYPE   CONTENT   DEPLOYMENT   READY   ADDRESS
@@ -45,7 +45,11 @@ mgmt-staging                git    Package   false        True     http://172.18
 regional                    git    Package   true         False    http://172.18.0.200:3000/nephio/regional.git
 ```
 
-### check gitea service address
+> **IMPORTANT:** As you can see, the repositories are directing to wrong gitea service port which is `http://[ip_addr]:3000`. \
+> We need modify addresses to gitea service `nodePort` address by visiting the gitea service. \
+> the default login credentials are `nephio` / `secret`
+
+### Check gitea service address
 
 ```bash
 kubectl get svc -n gitea
@@ -57,27 +61,28 @@ gitea-postgresql      ClusterIP      10.104.192.111   <none>         5432/TCP   
 gitea-postgresql-hl   ClusterIP      None             <none>         5432/TCP                      7d3h
 ```
 
-> **IMPORTANT:** As you can see, the repositories are directing to wrong gitea service port which is `http://[ip_addr]:3000`. \
-> We need to modify port. You can achieve this by visiting the gitea service. \
-> the default login credentials are `nephio` / `secret`
+nodePort is 30104. In this case, service address is `http://[mgmt_ip_address]:30104`
+
+### Login gitea service
 
 ![gitea login page](./pic/gitea_login.png)
 
 Once logged in, visit repository `nephio/mgmt` and modify the following files:
+
 - `mgmt/regional-repo/repo-porch.yaml`
 - `mgmt/edge01-repo/repo-porch.yaml`
 - `mgmt/edge02-repo/repo-porch.yaml`
 
 ![gitea login page](./pic/gitea_repo.png)
 
-### Replace `172.18.0.200:3000` to the gitea's nodePort address
+### Replace to the gitea's service address
 
 ```yaml
-# change gitea repo port!
 
+# change gitea service address
 apiVersion: config.porch.kpt.dev/v1alpha1
 kind: Repository
-metadata: # kpt-merge: default/example-cluster-name
+metadata:
   name: regional
   namespace: default
   annotations:
@@ -89,7 +94,7 @@ spec:
   git:
     branch: main
     directory: /
-    repo: http://172.18.0.200:3000/nephio/regional.git 
+    repo: http://[gitea_service_address]/nephio/regional.git 
     secretRef:
       name: regional-access-token-porch
   type: git
