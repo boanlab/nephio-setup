@@ -1,8 +1,12 @@
 # 3. Adding K8s Clusters to Nephio
+
 ## 3.1 Registering Clusters to Nephio
-### Once step 2 was finished **without any errors**, add `regional` cluster to Nephio as follows:
+
+### Add `regional` cluster to Nephio
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
+
+# add regional cluster to nephio
 kubectl get repositories
 porchctl rpkg get --name nephio-workload-cluster
 porchctl rpkg clone -n default catalog-infra-capi-b0ae9512aab3de73bbae623a3b554ade57e15596 --repository mgmt regional
@@ -13,15 +17,21 @@ porchctl rpkg propose -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868
 porchctl rpkg approve -n default mgmt-08c26219f9879acdefed3469f8c3cf89d5db3868
 ```
 
-### This will create draft `regional` to `gitea`. Then add `edge01` and `edge02` clusters to Nephio as follows:
+### Add `edge01` and `edge02` clusters to Nephio:
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
+
+#add edge01, edge02 cluster to nephio using 002-edge-clusters.yaml file
 kubectl apply -f test-infra/e2e/tests/free5gc/002-edge-clusters.yaml
 ```
 
-### Then after a bit of time, check for repositories registered in Nephio as follows
+### Check for repositories registered in Nephio
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
+
+#check repositories resource
 kubectl get repositories
 
 NAME                        TYPE   CONTENT   DEPLOYMENT   READY   ADDRESS
@@ -34,18 +44,30 @@ mgmt-staging                git    Package   false        True     http://172.18
 regional                    git    Package   true         False    http://172.18.0.200:3000/nephio/regional.git
 ```
 
-As you can see, the repositories are directing to wrong gitea address which is `http://172.18.0.200:3000`. We need to modify this manually to our address. You can achieve this by visiting the gitea service. The gitea will be running in `http://172.18.0.200:3000/`, the default login credentials are as it follows:
-- **username**: nephio
-- **password**: secret
+<br></br>
+> **IMPORTANT:** As you can see, the repositories are directing to wrong gitea service port which is `http://[ip_addr]:3000`. \
+> We need to modify port. You can achieve this by visiting the gitea service. \
+> the default login credentials are `nephio` / `secret`
+
+### check gitea service address
+```bash
+kubectl get svc -n gitea
+NAME                  TYPE           CLUSTER-IP       EXTERNAL-IP    PORT(S)                       AGE
+gitea                 LoadBalancer   10.100.64.97     172.18.0.200   22:30941/TCP,3000:30104/TCP   7d3h
+gitea-memcached       ClusterIP      10.100.218.39    <none>         11211/TCP                     7d3h
+gitea-postgresql      ClusterIP      10.104.192.111   <none>         5432/TCP                      7d3h
+gitea-postgresql-hl   ClusterIP      None             <none>         5432/TCP                      7d3h
+```
 
 Once logged in, visit repository `nephio/mgmt` and modify the following files:
 - `mgmt/regional-repo/repo-porch.yaml`
 - `mgmt/edge01-repo/repo-porch.yaml`
 - `mgmt/edge02-repo/repo-porch.yaml`
 
-### Replace any `172.18.0.200` to the gitea's service IP. An example will be like below:
+### Replace any `172.18.0.200` to the gitea's service port. An example will be like below:
+
 ```yaml
-# change gitea repo ip address!
+# change gitea repo port!
 
 apiVersion: config.porch.kpt.dev/v1alpha1
 kind: Repository
@@ -61,7 +83,7 @@ spec:
   git:
     branch: main
     directory: /
-    repo: http://172.18.0.200:3000/nephio/regional.git # change here to gitea repo ip address
+    repo: http://172.18.0.200:3000/nephio/regional.git # change here to gitea repo service port
     secretRef:
       name: regional-access-token-porch
   type: git

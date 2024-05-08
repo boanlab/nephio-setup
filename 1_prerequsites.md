@@ -163,8 +163,9 @@ kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 
 kubectl create -f https://raw.githubusercontent.com/aojea/kindnet/master/install-kindnet.yaml
 kubectl get nodes
-# NAME   STATUS   ROLES           AGE    VERSION
-# np-m   Ready    control-plane   7d1h   v1.27.12
+
+NAME   STATUS   ROLES           AGE    VERSION
+np-m   Ready    control-plane   7d1h   v1.27.12
 ```
 
 ## 1.3 Install Packages
