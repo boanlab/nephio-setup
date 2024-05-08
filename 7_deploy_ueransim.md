@@ -13,8 +13,9 @@ webui-service NodePort  10.104.14.50 <none>  5000:30500/TCP 5d15h
 
 Now, login to the Free5GC login page. You can access the server using the `webui-service` node port. 
 
-### Follow https://free5gc.org/guide/Webconsole/Create-Subscriber-via-webconsole/ to create a subscriber
+Follow https://free5gc.org/guide/Webconsole/Create-Subscriber-via-webconsole/ to create a subscriber
 
+### Create `ueransim` namespace & `ueransimgnb` deployments
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 
@@ -22,6 +23,8 @@ kubectl apply -f test-infra/e2e/tests/free5gc/007-edge01-ueransim.yaml
 ```
 
 This creates a `ueransim` namespace in `edge01` with two deployments `ueransimgnb` (gNodeB) and `ueransimue` (UE).
+
+### Check `ueransimnb` & `ueransimue`
 
 ```bash
 ##### -----=[ In edge01 cluster ]=----- ####
@@ -35,7 +38,9 @@ ueransimue-edge01-7b44fcd85b-r2j2n  1/1 Running 0  37m
 
 Once `ueransimgnb-edge01` deployment starts, this creates a connection (called `N2`) to AMF in `regional` cluster.
 
-### Check logs from `regional` cluster to check if the AMF connection was successful
+Check logs from `regional` cluster to check if the AMF connection was successful
+
+### Check AMF connection
 
 ```bash
 ##### -----=[ In regional cluster ]=----- ####

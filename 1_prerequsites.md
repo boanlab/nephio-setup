@@ -1,59 +1,114 @@
 # 1. Prerequsites
+
 ## 1.1 Servers
-The environment will utilize 4 servers:
-> Official Nephio GCP utilizes single server with 8 vCPU and 8GB RAM. However, for our purpose, we will be using extra resources. 
-> In the case of the IP address, you must configure it by changing it to the IP of the installation environment.
+
+The test environment contains 4 servers:
+> Official Nephio GCP utilizes a single server with 8 vCPU and 8GB of RAM. \
+> However, we need more resources to properly set up Nephio and Free5gc directly on servers.
+
+> Note that you need to configure the following IP addresses depending on your environment.
 
 |Type|Spec|K8s Cluster Name|IP Address|Pod CIDR|
 |--|--|--|--|--|
-|Nephio Mgmt|8 vCPU / 32GB RAM | `mgmt` | 172.18.0.3 | 10.120.0.0/16 |
-|Regional Cluster|8 vCPU / 8GB RAM | `regional` | 172.18.0.4 | 10.121.0.0/16 |
-|Edge01 Cluster|8 vCPU / 8GB RAM | `edge01` | 172.18.0.5 | 10.122.0.0/16 |
-|Edge02 Cluster|8 vCPU / 8GB RAM | `edge02` | 172.18.0.6 | 10.123.0.0/16 |
+|Nephio Mgmt|8 vCPU / 32GB RAM / 200GB | `mgmt` | 172.18.0.3 | 10.120.0.0/16 |
+|Regional Cluster|8 vCPU / 8GB RAM / 200GB | `regional` | 172.18.0.4 | 10.121.0.0/16 |
+|Edge01 Cluster|8 vCPU / 8GB RAM / 100GB | `edge01` | 172.18.0.5 | 10.122.0.0/16 |
+|Edge02 Cluster|8 vCPU / 8GB RAM / 100GB | `edge02` | 172.18.0.6 | 10.123.0.0/16 |
 
-When installing in GCP, VPC settings are required, and the configured VPC network must be applied to the instance.
-To set up a VPC network, proceed in the following order.
-```
-1. VPC Network > CREATE VPC NETWORK
-2. In New Subnet, set the region to the same region as the instance and IP Range to 172.18.0.0/24, then press the create button.
-```
+When install in GCP, VPC settings are required, and the configured VPC Network must be applied to the instance.
 
-After creating a VPC network, apply the VPC Network to the instance through the following procedure.
-```
-1. Create Instance > Advanced Options > Networking > Network Interface
-2. Click 'Edit Network Interface', and select the created vpc network.
-3. Click Boot Disk and change it to Ubuntu.
-4. Click Create to create an instance.
-```
+To set up a VPC Network, proceed in the following order.
+
+> 1 - VPC Network > CREATE VPC NETWORK \
+> 2 - Write VPC name, Subnet name, Region, IPv4 range and press `CREATE` button
+
+### Press CREATE button
+
+![CREATE_VPC_NETWORK](./pic/vpc_setting_1.png)
+
+### Write the required fields
+
+> **IMPORTANT:** When you select the region, you must select the same region as the instance to which you want to apply the VPC Network.
+
+![WRITE_FIELDS](./pic/vpc_setting_2.png)
+
+After creating a VPC Network, apply the VPC Network to the instance through the following procedure.
+
+> 1 - Compute Engine > CREATE INSTANCE \
+> 2 - Write Instance name, Region, Spec \
+> 3 - Press Boot disk > CHANGE and set Image, Size \
+> 4 - Press Advanced options > Networking > Network interfaces and set VPC Network and press `CREATE` button
+
+### Press CREATE button
+
+> **IMPORTANT:** When you select the region, you must select the same region as VPC Network. \
+> **IMPORTANT:** When you press Boot disk > CHANGE, set Image Ubuntu 22.04 x86-64
+
+![CREATE_INSTANCE](./pic/instance_setting_0.png)
+
+### Write the required fields
+
+![WRITE_FIELDS](./pic/instance_setting_1.png)
 
 ## 1.2 Install kubernetes
-The official environment provisions Kubernetes with KinD. To have as similar environment as possible, we will be using:
+
+We use the following versions to set up Nephio and Free5gc.
+
 - **Kubernetes**: v1.27.12
 - **CRI**: Containerd
 - **CNI**: Kindnet
 
- 
+### Install Kubernetes with containerd
 
-Install Kubernetes with Containerd CRI with:
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
-$ sudo apt-get install git -y
-$ git clone https://github.com/boanlab/tools.git
-$ ./tools/containers/install-containerd.sh
 
-$ sudo apt-get update
-$ sudo apt-get install -y apt-transport-https ca-certificates curl gpg
-$ curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.27/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-$ echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.27/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+# update repo
+sudo apt-get update
 
-$ sudo sysctl -w net.ipv4.ip_forward=1
-$ sudo swapoff -a
+# add gpg key
+sudo apt-get install -y curl ca-certificates gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-$ sudo apt-get update
-$ sudo apt-get install -y kubelet kubeadm kubectl
-$ sudo apt-mark hold kubelet kubeadm kubectl
+# add docker repository
+echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# update the docker repo
+sudo apt-get update
+
+# install containerd
+sudo apt-get install -y containerd.io
+
+# set up the default config file
+sudo mkdir -p /etc/containerd
+sudo containerd config default | sudo tee /etc/containerd/config.toml
+sudo sed -i "s/SystemdCgroup = false/SystemdCgroup = true/g" /etc/containerd/config.toml
+sudo systemctl restart containerd
+
+# add the key for Kubernetes repo
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+# add sources.list.d
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+# update repo
+sudo apt-get update
+
+# enable ipv4.ip_forward
+sudo sysctl -w net.ipv4.ip_forward=1
+
+# turn off swap filesystem
+sudo swapoff -a
+
+# install kubernetes
+sudo apt-get install -y kubelet kubeadm kubectl
+
+# exclude kubernetes packages from updates
+sudo apt-mark hold kubelet kubeadm kubectl
 ```
-Setup config.yaml for each clusters. Refer to following yaml files for information:
+### Create `config.yaml` file for each cluster
 
 <details>
   <summary>mgmt_config.yaml</summary>
@@ -74,7 +129,7 @@ Setup config.yaml for each clusters. Refer to following yaml files for informati
   apiVersion: kubeadm.k8s.io/v1beta3
   kind: ClusterConfiguration
   networking:
-    podSubnet: "10.121.0.0/16" 
+    podSubnet: "10.121.0.0/16"
   clusterName: "regional"
   ```
 </details>
@@ -86,7 +141,7 @@ Setup config.yaml for each clusters. Refer to following yaml files for informati
   apiVersion: kubeadm.k8s.io/v1beta3
   kind: ClusterConfiguration
   networking:
-    podSubnet: "10.122.0.0/16" 
+    podSubnet: "10.122.0.0/16"
   clusterName: "edge01"
   ```
 </details>
@@ -98,83 +153,133 @@ Setup config.yaml for each clusters. Refer to following yaml files for informati
   apiVersion: kubeadm.k8s.io/v1beta3
   kind: ClusterConfiguration
   networking:
-    podSubnet: "10.123.0.0/16" 
+    podSubnet: "10.123.0.0/16"
   clusterName: "edge02"
   ```
 </details>
 
-Initialize kubeadm as follows:
-```bash
-##### -----=[ In ALL clusters ]=----- ####
-$ sudo modprobe br_netfilter
-$ sudo bash -c 'echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables'
-$ sudo kubeadm init --config=config.yaml --upload-certs
-$ mkdir -p $HOME/.kube
-$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
-$ kubectl taint nodes --all node-role.kubernetes.io/control-plane-
-```
-> We are going to taint master node so that Pods can be provisioned in the master node as well (single node setting)
+### Initialize kubeadm
 
-Then, install Kindnet CNI as follows:
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
-$ kubectl create -f https://raw.githubusercontent.com/aojea/kindnet/master/install-kindnet.yaml
-$ kubectl get nodes
+
+# enable br_netfilter
+sudo modprobe br_netfilter
+sudo bash -c 'echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables'
+
+# initialize kubeadm
+sudo kubeadm init --config=config.yaml --upload-certs
+
+# make kubectl work for non-root user
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+# disable master isolation
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+```
+
+### Install Kindnet CNI
+
+```bash
+##### -----=[ In ALL clusters ]=----- ####
+
+kubectl create -f https://raw.githubusercontent.com/aojea/kindnet/master/install-kindnet.yaml
+kubectl get nodes
+
 NAME   STATUS   ROLES           AGE    VERSION
 np-m   Ready    control-plane   7d1h   v1.27.12
 ```
 
 ## 1.3 Install Packages
-> Nephio utilizes Ansible and kpt to deploy its packages, so make all 4 machines be able to perform `sudo` without password prompt.
-> Install all packages in all 4 machines
 
-Install KPT as follows:
+Nephio utilizes Ansible and kpt to deploy its packages.
+
+### Install KPT
+
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
-$ wget https://github.com/GoogleContainerTools/kpt/releases/download/v1.0.0-beta.44/kpt_linux_amd64
-$ mv kpt_linux_amd64 kpt
-$ chmod +x kpt
-$ sudo mv ./kpt /usr/bin/
-$ kpt version
+
+wget https://github.com/GoogleContainerTools/kpt/releases/download/v1.0.0-beta.44/kpt_linux_amd64
+mv kpt_linux_amd64 kpt
+chmod +x kpt
+sudo mv ./kpt /usr/bin/
+kpt version
 ```
 
-Install porchctl as follows:
+### Install porchctl
+
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
-$ wget https://github.com/nephio-project/porch/releases/download/v2.0.0/porchctl_2.0.0_linux_amd64.tar.gz
-$ tar xvfz ./porchctl_2.0.0_linux_amd64.tar.gz 
-$ sudo mv porchctl /usr/bin
-$ porchctl version
+
+wget https://github.com/nephio-project/porch/releases/download/v2.0.0/porchctl_2.0.0_linux_amd64.tar.gz
+tar xvfz ./porchctl_2.0.0_linux_amd64.tar.gz 
+sudo mv porchctl /usr/bin
+porchctl version
 ```
 
-Install Docker as follows:
+### Install Docker
+
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
-$ ./tools/containers/install-docker.sh
+
+# add gpg key
+# We have already added gpg key and docker repository
+sudo apt-get install -y ca-certificates gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# add docker repository
+echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# update the docker repo
+sudo apt-get update
+
+# install docker
+sudo apt-get install -y docker-ce
+
+# add user to docker group
+sudo usermod -aG docker $USER
+
+# bypass to run docker command
+sudo chmod 666 /var/run/docker.sock
 ```
 
-Also, for future network SDN connection across clusters, we will be using OVS. So install OVS as follows:
+### Install Open vSwitch
+
+In the later steps, we need to connect SR Linux from `mgmt` to other clusters(i.e. `edge01`, `edge02` and `regional`). In order for multi-cluster connectivity, we will be using VXLAN with Open vSwitch.
+
 ```bash
 ##### -----=[ In ALL clusters ]=----- ####
-$ sudo apt-get install openvswitch-switch -y  # for ovs-vsctl
-$ sudo apt-get install net-tools -y  # for ifconfig
+
+# install open vSwitch
+sudo apt-get install -y openvswitch-switch
+
+# install networking tools especially for ifconfig
+sudo apt-get install -y net-tools
 ```
 
-For worker clusters, install gtp5g which is a Kernel module for 5G:
+### Install gtp5g, a Kernel module for 5G
+
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
-$ wget https://github.com/free5gc/gtp5g/archive/refs/tags/v0.8.3.tar.gz
-$ tar xvfz v0.8.3.tar.gz
-$ cd gtp5g-0.8.3/
-$ sudo apt-get install gcc gcc-12 make
-$ sudo make
-$ sudo make install
-$ lsmod | grep gtp
+
+wget https://github.com/free5gc/gtp5g/archive/refs/tags/v0.8.3.tar.gz
+tar xvfz v0.8.3.tar.gz
+cd gtp5g-0.8.3/
+sudo apt-get install gcc gcc-12 make
+
+# compile and build gtp5g module
+sudo make
+sudo make install
+lsmod | grep gtp
 ```
 
 ## 1.4 Prepare Nephio
-Nephio utilizes `gitea` and `gitea` utilizes 2 local path PVs. Therefore, Create pv in `mgmt` cluster as follows:
+
+Nephio utilizes `gitea` that requires 2 hostPath PersistentVolumes. This was originally provisioned by `local-path-provisioner`, however since we are running on a bare-metal environment, we need to create these PersistentVolumes manually in the `mgmt` cluster.
+
 ```yaml
 # Change hostPath to install env user path
 
@@ -190,7 +295,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   volumeMode: Filesystem
   hostPath:
-    path: /home/boan/nephio/gitea/data-gitea-0 #change here
+    path: /home/[USER]/nephio/gitea/data-gitea-0 # change here
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -204,13 +309,21 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   volumeMode: Filesystem
   hostPath:
-    path: /home/boan/nephio/gitea/data-gitea-postgresql-0 #change here
+    path: /home/[USER]/nephio/gitea/data-gitea-postgresql-0 # change here
 ```
-After save codes, apply it
+
+### Save the above YAML as 'gitea-pv.yaml' and apply it
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
-$ kubectl apply -f gitea-pv.yaml
+
+# modify gitea-pv.yaml
+sed -i 's/[USER]/$USER/g' gitea-pv.yaml
+
+# apply the yaml file to create 2 local path PVs
+kubectl apply -f gitea-pv.yaml
 ```
+
 <br></br>
 ---
 |Index|Next|
