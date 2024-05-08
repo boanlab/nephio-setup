@@ -2,10 +2,12 @@
 Nephio utilizes SR Linux to interconnect clusters. However, since we are using multiple servers, we need to connect them as if they were connected. Therefore, we will be using OVS to connect between SR Linux to each clusters.
 
 ## 4.1 Setup Containerlab
-> **IMPORTANT:** Perform this in `mgmt` cluster.
 
 ### Create a network topology file as follows:
+
 ```yaml
+##### -----=[ In mgmt cluster ]=----- ####
+
 name: 5g
 prefix: net
 topology:
@@ -25,18 +27,18 @@ topology:
     - endpoints: ["leaf:e1-3", "host:sr-e2"]
 ```
 
-This will deploy a SR Linux having `e1-1`, `e1-2`, `e1-3` and those are connected to host's `sr-r`, `'sr-e1` and `sr-e1`. Also, we are going to connect each interfaces to a ovs tunnel that is connected to the remote server using VXLAN. Deploy containerlab using codes
+> This will deploy a SR Linux having `e1-1`, `e1-2`, `e1-3` and those are connected to host's `sr-r`, `'sr-e1` and `sr-e1`. \
+> Also, we are going to connect each interfaces to a ovs tunnel that is connected to the remote server using VXLAN. 
+
+### Deploy containerlab using codes
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 sudo containerlab deploy --topo topology.yaml
 ```
 
-### So for example, it will be something like:
-```
-leaf -- e1-1(veth) -- sr-r(veth) -- br-tun-r(ovs) -- vxlan0 -- VXLAN -- vxlan0 -- eth1(ovs)
-```
-
 ### Create OVS bridge in mgmt cluster by:
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 sudo ovs-vsctl add-br br-tun-r
@@ -48,7 +50,8 @@ sudo ifconfig br-tun-e1 up
 sudo ifconfig br-tun-e2 up
 ```
 
-Then prepare to connect vxlans in mgmt cluster by:
+### Then prepare to connect vxlans in mgmt cluster by:
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 #Before copy&paste, change remote_ip address to regional, edge01, edge02 ip address!
@@ -59,37 +62,38 @@ sudo ovs-vsctl add-port br-tun-r vxlan0 -- set interface vxlan0 type=vxlan optio
 ```
 
 ## 4.2 Setup OVS
-> **IMPORTANT:** Perform this in `regional`, `edge01`, `edge02` cluster.
 
 ### Then in each worker clusters, connect the otherpart by:
+
 ```bash
 ##### -----=[ In regional cluster ]=----- ####
-#Before copy&paste, change remote ip to mgmt cluster machine's ip address!
 
+# set ovs
 sudo ovs-vsctl add-br eth1
 sudo ifconfig eth1 up
-sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=172.18.0.120 options:dst_port=48317 options:tag=321 # change remote ip to mgmt cluster machine's ip
+sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=[mgmt_ip_address] options:dst_port=48317 options:tag=321
 ```
 
 ```bash
 ##### -----=[ In edge01 cluster ]=----- ####
-#Before copy&paste, change remote ip to mgmt cluster machine's ip address!
 
+# set ovs
 sudo ovs-vsctl add-br eth1
 sudo ifconfig eth1 up
-sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=172.18.0.120 options:dst_port=48318 options:tag=321 # change remote ip to mgmt cluster machine's ip
+sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=[mgmt_ip_address] options:dst_port=48318 options:tag=321
 ```
 
 ```bash
 ##### -----=[ In edge02 cluster ]=----- ####
-#Before copy&paste, change remote ip to mgmt cluster machine's ip address!
 
+# set ovs
 sudo ovs-vsctl add-br eth1
 sudo ifconfig eth1 up
-sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=172.18.0.120 options:dst_port=48319 options:tag=321 # change remote ip to mgmt cluster machine's ip
+sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=[mgmt_ip_address]  options:dst_port=48319 options:tag=321
 ```
 
 ### Also, create interfaces for `eth1.2` ~ `eth1.6`. These interfaces will be later connected to n3, n4, n6. Those interfaces will be connected to `eth1` OVS bridge in each worker nodes. So perform:
+
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
 sudo ip link add link eth1 name "eth1.2" type vlan id 2
@@ -104,7 +108,9 @@ sudo ifconfig eth1.4 up
 sudo ifconfig eth1.5 up
 sudo ifconfig eth1.6 up
 ```
+
 ### After then, add-port with ovs-vsctl in mgmt cluster as follows:
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 sudo ovs-vsctl add-port br-tun-r sr-r
@@ -113,7 +119,9 @@ sudo ovs-vsctl add-port br-tun-e2 sr-e2
 ```
 
 ## 4.3 Apply Nephio Networks
+
 ### Then apply the network settings to Nephio as follows:
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 kubectl apply -f test-infra/e2e/tests/free5gc/002-network.yaml
@@ -121,6 +129,7 @@ kubectl apply -f test-infra/e2e/tests/free5gc/002-secret.yaml
 ```
 
 ### Also, we have to setup RawTopology as well. An example as follows:
+
 ```yaml
 #change ip address to mgmt cluster's ip!
 
@@ -131,7 +140,7 @@ metadata:
 spec:
   nodes:
     srl:
-      address: 172.18.0.120:57400 # change here to mgmt ip address!
+      address: [mgmt_ip_address]:57400
       provider: srl.nokia.com
     mgmt:
       provider: host
@@ -160,6 +169,7 @@ spec:
 ```
 
 ### Be aware that the srl.address shall be provided as the `mgmt` cluster's SR Linux container. Apply this using:
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 kubectl create -f topo.yaml

@@ -13,7 +13,7 @@ The test environment contains 4 servers:
 |Edge01 Cluster|8 vCPU / 8GB RAM | `edge01` | 172.18.0.5 | 10.122.0.0/16 |
 |Edge02 Cluster|8 vCPU / 8GB RAM | `edge02` | 172.18.0.6 | 10.123.0.0/16 |
 
-When installing in GCP, VPC settings are required, and the configured VPC network must be applied to the instance.
+When install in GCP, VPC settings are required, and the configured VPC network must be applied to the instance.
 To set up a VPC network, proceed in the following order.
 ```
 1. VPC Network > CREATE VPC NETWORK

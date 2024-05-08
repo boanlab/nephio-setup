@@ -3,6 +3,7 @@
 ## 3.1 Registering Clusters to Nephio
 
 ### Add `regional` cluster to Nephio
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 
@@ -50,8 +51,10 @@ regional                    git    Package   true         False    http://172.18
 > the default login credentials are `nephio` / `secret`
 
 ### check gitea service address
+
 ```bash
 kubectl get svc -n gitea
+
 NAME                  TYPE           CLUSTER-IP       EXTERNAL-IP    PORT(S)                       AGE
 gitea                 LoadBalancer   10.100.64.97     172.18.0.200   22:30941/TCP,3000:30104/TCP   7d3h
 gitea-memcached       ClusterIP      10.100.218.39    <none>         11211/TCP                     7d3h
@@ -90,6 +93,7 @@ spec:
 ```
 
 ### Once you have committed the change, the porch-system which is running in `mgmt` cluster will notice that the repositories were changed. This might take a little bit of time, in some time later, check the repositories registered in Nephio by:
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 kubectl get repositories
@@ -106,6 +110,7 @@ regional                    git    Package   true         True    http://172.18.
 
 ## 3.2 Clusters Joining Nephio
 ### In order for regional, edge clusters to join Nephio, they require `secrets` to gain access to `mgmt` cluster's gitea service. The secrets are automatically generated in step 3.1. You can check them by:
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 kubectl get secrets --all-namespaces
@@ -133,10 +138,11 @@ The clusters need to have those secrets registered in their clusters. This means
 # Before copy&paste, change username, ip address, homePath
 
 kubectl get secret regional-access-token-configsync -o yaml > regional-secret.yaml
-scp regional-secret.yaml [User]@172.18.0.120:/home/[User] # change mgmt cluster machine's username, homepath, ip address 
+scp regional-secret.yaml [User]@[cluster_ip_address]:/home/[User] # change mgmt cluster machine's username, homepath, ip address 
 ```
 
 This will export the secret to regional cluster as `regional-secret.yaml`. In the destination cluster, in this case `regional`, modify a bit of the secret.
+
 ```yaml
 apiVersion: v1
 data:
@@ -151,12 +157,14 @@ kind: Secret
   ownerReferences:
 ...
 ```
+
 Change the namespace of the token to `config-management-system` from `default`. Perform this for all `edge01` and `edge02` clusters as well. In short, to proceed, we have to have the following secrets:
 - `config-management-system/regional-access-token-configsync` in `regional` cluster
 - `config-management-system/edge01-access-token-configsync` in `edge01` cluster
 - `config-management-system/edge02-access-token-configsync` in `edge02` cluster
 
-But before apply secrets, install `configsync` in the clusters joining Nephio as follows:
+### But before apply secrets, install `configsync` in the clusters joining Nephio as follows:
+
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
 kpt pkg get --for-deployment https://github.com/nephio-project/catalog.git/nephio/core/configsync@main
@@ -167,14 +175,15 @@ kpt live apply configsync --reconcile-timeout=15m --output=table
 kpt pkg get https://github.com/nephio-project/catalog.git/nephio/optional/rootsync@main
 ```
 
-This will automatically install `configsync`. and next, apply secrets in clusters
+### This will automatically install `configsync`. and next, apply secrets in clusters
+
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
 kubectl apply -f regional-secret.yaml  # edge01-secret.yaml, edge02-secret.yaml in other clusters
 ```
 
-After apply secrets, we need to install `rootsync` in the clusters joining Nephio. 
-in order for `rootsync` to know the target gitea service that the cluster needs to access, we need to modify `rootsync/rootsync.yaml` Refer to the following rootsync for detailed informaton:
+### After apply secrets, we need to install `rootsync` in the clusters joining Nephio. 
+### in order for `rootsync` to know the target gitea service that the cluster needs to access, we need to modify `rootsync/rootsync.yaml` Refer to the following rootsync for detailed informaton:
 
 <details>
   <summary>regional rootsync.yaml</summary>
@@ -242,14 +251,15 @@ spec:
   ```
 </details>
 
-Once the rootsync/rootsync files were modified, install rootsync by:
+### Once the rootsync/rootsync files were modified, install rootsync by:
+
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
 kpt live init rootsync
 kpt live apply rootsync --reconcile-timeout=15m --output=table
 ```
 
-This might fail one time, try again. If the problem proceeds, check for the error message and make sure the secrets are registered in respective clusters properly. If you see `root-reconciler` the namespace `config-management-system` like below, this is working as intended.
+### This might fail one time, try again. If the problem proceeds, check for the error message and make sure the secrets are registered in respective clusters properly. If you see `root-reconciler` the namespace `config-management-system` like below, this is working as intended.
 
 ``` bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
@@ -260,7 +270,8 @@ reconciler-manager-5b5d8557-wf69f             2/2     Running   0              6
 root-reconciler-regional-79949ff68-r5jvs      4/4     Running   87 (78m ago)   6d20h
 ```
 
-Also, check if `root-reconciler` can actually access the gitea properly by:
+### Also, check if `root-reconciler` can actually access the gitea properly by:
+
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
 kubectl logs -n config-management-system root-reconciler-regional-79949ff68-r5jvs -c git-sync
@@ -274,15 +285,16 @@ I0415 05:50:46.232708 12 main.go:1065] "level"=1 "msg"="no update required" "rev
 I0415 05:50:46.232790 12 main.go:585] "level"=1 "msg"="next sync" "wait_time"=15000000000
 ```
 
-> If the message keeps coming out as if the target gitea address is not accessable, perform `curl` to the gitea service. If the gitea is stil down, restart the `metallb-system`'s daemonsets in `mgmt` cluster. There are some frequent occurances with the `metallb-system/speaker` daemonset not serving the gitea properly. In this case, restart the daemonset by:
+> If the message keeps coming out as if the target gitea address is not accessable, perform `curl` to the gitea service. \
+> If the gitea is stil down, restart the `metallb-system`'s daemonsets in `mgmt` cluster. There are some frequent occurances with the `metallb-system/speaker` daemonset not serving the gitea properly. \
+> In this case, restart the daemonset by:
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 kubectl rollout restart daemonsets -n metallb-system
 ```
+
 > This will solve the issue and make the load balancer IP work again.
-
-If you seen all `edge01`, `edge02` and `regional` clusters having proper git-sync, you can proceed to to the Step 4.
-
 
 <br></br>
 ---

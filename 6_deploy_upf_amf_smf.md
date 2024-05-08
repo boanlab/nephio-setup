@@ -1,6 +1,9 @@
+
 # 6. Deploying UPF, AMF and SMF
 
-### Once Free5gc-CP is properly set up, you can deploy `UPF`, `AMF` and `SMF`.
+Once Free5gc-CP is properly set up, you can deploy `UPF`, `AMF` and `SMF`. This takes a bit long time.
+
+### Deploy UPF, AMF, SMF
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
@@ -10,14 +13,14 @@ kubectl apply -f test-infra/e2e/tests/free5gc/006-regional-free5gc-amf.yaml
 kubectl apply -f test-infra/e2e/tests/free5gc/006-regional-free5gc-smf.yaml
 ``` 
 
-This takes a bit long time.
+SMF in `regional` connects to UPFs in `edge1` and `edge02`.
 
-### SMF in `regional` connects to UPFs in `edge1` and `edge02`. Check SMF's log in `regional`.
+### Check SMF's log in `regional`.
 
 ```bash
 ##### -----=[ In regional cluster ]=----- ####
 
-kubectl logs -n free5gc-cp -l name=smf-regional
+$ kubectl logs -n free5gc-cp -l name=smf-regional
 
 [INFO][SMF][App] Received PFCP Association Setup Accepted Response from UPF[172.1.0.254]
 [INFO][SMF][App] Sending PFCP Association Request to UPF[172.1.2.254]
