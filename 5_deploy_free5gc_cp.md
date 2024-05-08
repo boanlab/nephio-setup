@@ -25,7 +25,7 @@ spec:
     path: /home/[User]/nephio/mongodb/
 ```
 
-### Then apply pv files as follows:
+### Apply PV file
 
 ```bash
 ##### -----=[ In regional cluster ]=----- ####
@@ -70,10 +70,11 @@ kpt live apply multus --reconcile-timeout=15m --output=table
 kubectl rollout restart deployment -n free5gc
 ```
 
-### This will deploy 
+This will deploy
 
-1. `free5gc/free5gc-operator` pods in `edge01`, `edge02` and `regional` clusters.
-2. `free5gc-cp/free5gc-NFV` pods in `regional` cluster. Ex) `free5gc-ausf`, `nrf`, `nssf`,`pcf`, `udm`, etc.
+1 -  `free5gc/free5gc-operator` pods in `edge01`, `edge02` and `regional` clusters.
+
+2 -  `free5gc-cp/free5gc-NFV` pods in `regional` cluster. Ex) `free5gc-ausf`, `nrf`, `nssf`,`pcf`, `udm`, etc.
 
 
 <br></br>
