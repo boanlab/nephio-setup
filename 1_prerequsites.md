@@ -6,7 +6,7 @@ The test environment contains 4 servers:
 > Official Nephio GCP utilizes a single server with 8 vCPU and 8GB of RAM. \
 > However, we need more resources to properly set up Nephio and Free5gc directly on servers.
 
-> Note that you need to configure the following IP addresses depending on your environment.
+> Note that we need to configure the following IP addresses depending on our environment.
 
 |Type|Spec|K8s Cluster Name|IP Address|Pod CIDR|
 |--|--|--|--|--|
@@ -28,7 +28,7 @@ To set up a VPC Network, proceed in the following order.
 
 ### Write the required fields
 
-> **IMPORTANT:** When you select the region, you must select the same region as the instance to which you want to apply the VPC Network.
+> **IMPORTANT:** When we select the region, we must select the same region as the instance to which we want to apply the VPC Network.
 
 ![WRITE_FIELDS](./pic/vpc_setting_2.png)
 
@@ -41,8 +41,8 @@ After creating a VPC Network, apply the VPC Network to the instance through the 
 
 ### Press CREATE button
 
-> **IMPORTANT:** When you select the region, you must select the same region as VPC Network. \
-> **IMPORTANT:** When you press Boot disk > CHANGE, set Image Ubuntu 22.04 x86-64
+> **IMPORTANT:** When we select the region, we must select the same region as VPC Network. \
+> **IMPORTANT:** When we press Boot disk > CHANGE, set Image Ubuntu 22.04 x86-64
 
 ![CREATE_INSTANCE](./pic/instance_setting_0.png)
 
