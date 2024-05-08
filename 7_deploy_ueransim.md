@@ -1,4 +1,4 @@
-# 7. Deploying UERANSIM
+# 7. Deploy UERANSIM
 
 ### Check the Free5GC Web UI
 
@@ -15,16 +15,17 @@ Now, login to the Free5GC login page. You can access the server using the `webui
 
 Follow https://free5gc.org/guide/Webconsole/Create-Subscriber-via-webconsole/ to create a subscriber
 
-### Create `ueransim` namespace & `ueransimgnb` deployments
+### Create `ueransim` namespace and `ueransimgnb` deployments
+
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
 
 kubectl apply -f test-infra/e2e/tests/free5gc/007-edge01-ueransim.yaml
 ```
 
-This creates a `ueransim` namespace in `edge01` with two deployments `ueransimgnb` (gNodeB) and `ueransimue` (UE).
+This action establishes a `ueransim` namespace in the `edge01` cluster, featuring two deployments: `ueransimgnb` (gNodeB) and `ueransimue` (UE).
 
-### Check `ueransimnb` & `ueransimue`
+### Check `ueransimnb` and `ueransimue`
 
 ```bash
 ##### -----=[ In edge01 cluster ]=----- ####
@@ -36,11 +37,11 @@ ueransimgnb-edge01-7b764c4f9c-92spz 1/1 Running 0  37m
 ueransimue-edge01-7b44fcd85b-r2j2n  1/1 Running 0  37m
 ```
 
-Once `ueransimgnb-edge01` deployment starts, this creates a connection (called `N2`) to AMF in `regional` cluster.
-
-Check logs from `regional` cluster to check if the AMF connection was successful
+Once the `ueransimgnb-edge01` deployment is initiated, it establishes an `N2` connection to the `AMF` in the `regional` cluster.
 
 ### Check AMF connection
+
+Review the logs in the `regional` cluster to confirm the success of the `AMF` connection.
 
 ```bash
 ##### -----=[ In regional cluster ]=----- ####
@@ -59,7 +60,7 @@ kubectl logs -n free5gc-cp -l name=amf-regional
 [INFO][AMF][NGAP][172.2.0.254:38273][AMF_UE_NGAP_ID:23] Handle PDU Session Resource Setup Response
 ```
 
-As seen in the log, AMF receives request from gNodeB in `edge01` cluster.
+The log shows that the `AMF` receives a request from `gNodeB` in the `edge01` cluster.
 
 <br></br>
 ---

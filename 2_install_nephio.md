@@ -1,10 +1,10 @@
 # 2. Install Nephio
 
-> **IMPORTANT:** Git clone test-infra repo which has Ansible playbook that deploys Nephio. \
-> The original Nephio's test-infra does have a option that disables Kind installation, however this does not work properly as of May 2024. So we removed KinD installation from the Ansible playbook. \
-> Change workdir to home directory and start initializing `init.sh`.
+> **IMPORTANT:** Nephio's `test-infra` repository contains an Ansible playbook used for deploying Nephio. Although the playbook includes an option to disable KinD installation, this feature is not functioning correctly as of May 2024. Therefore, we have removed the KinD installation option from the Ansible playbook and maintained a new repository in 5GSEC.
 
-### Download init script & Set Environment Variables
+> **IMPORTANT:** Change workdir to home directory and start initializing `init.sh`.
+
+### Download `init.sh` script and Update Environment Variables
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
@@ -17,20 +17,22 @@ export NEPHIO_USER=$USER
 export ANSIBLE_CMD_EXTRA_VAR_LIST="k8s.context=kubernetes-admin@mgmt kind.enabled=false host_min_vcpu=4 host_min_cpu_ram=8"
 ```
 
-Then run `init.sh` to setup Nephio R2 with optional packages as well.
+> **IMPORTANT:** Before executing the `init.sh` script, the IP addresses of the installation components, specifically `gitea` and `nephio-webui`, must be updated to reflect those of the test environment.
 
-> **IMPORTANT:** Before running the init.sh script, the IP addresses of installation components, must be changed to  test environment(gitea and nephio-webui). \
-> For this purpose, the following three tasks need to be performed. \
-> 1 - Fork https://github.com/nephio-project/catalog.git repository to a arbitrary git repository. \
-> 2 - Clone repository and change the 172.18.0.200 IP and 172.18.0.0/24 IP range strings. then commit changed codes\
-> 3 - Among the codes in the downloaded test-infra directory, change the string written with the https://github.com/nephio-project/catalog.git address to the cloned repository address.
+Before executing the `init.sh` script, the following tasks must be completed.
 
-### Change IP address, ranges in catalog (task 2)
+(1) Fork https://github.com/nephio-project/catalog.git repository to your GitHub.
+
+(2) Clone the forked repository.
 
 ```bash
 # clone codes from forked repository
-git clone https://github.com/[Github_user_ID]/catalog.git
+git clone https://github.com/[YOUR_GIRHUB_ID]/catalog.git
+```
 
+(3) Change the 172.18.0.200 IP and 172.18.0.0/24 IP range strings.
+
+```bash
 # set env for edit
 GITEA_IP_ADDR=$(hostname -I | awk '{print $1}')
 SUBNET_IP_RANGE=[subnet_IP_address_range]
@@ -47,45 +49,59 @@ sed 's/172.18.0.200/$GITEA_IP_ADDR/g' catalog/nephio/core/nephio-operator/app/co
 sed 's/172.18.0.200/$GITEA_IP_ADDR/g' catalog/nephio/optional/rootsync/rootsync.yaml
 sed 's/172.18.0.200/$GITEA_IP_ADDR/g' catalog/nephio/optional/rootsync/set-values.yaml
 sed 's/172.18.0.200/$NEPHIO_WEBUI_ADDR/g' catalog/nephio/optional/webui/service.yaml
-
-# commit changed code
-cd catalog
-git add .
-git commit -m "changed ip address"
-git push
-cd ..
 ```
 
-### Change catalog path in test-infra (task 3)
+(4) Commit the changes and push them to your forked repository.
 
 ```bash
-# using sed command, change repository name
-sed 's/free5gc/[Github_user_ID]/g' ./test-infra/e2e/provision/playbooks/roles/bootstrap/defaults/main.yaml
-sed 's/free5gc/[Github_user_ID]/g' ./test-infra/e2e/provision/playbooks/roles/install/defaults/main.yaml
+# move to `catalog`
+cd catalog
+
+# commit the changes
+git add .
+git commit -m "changed ip address"
+
+# push the commit to your repository
+git push
 ```
 
-### Run init script
+(5) Change the string `https://github.com/nephio-project/catalog.git` to your repository `https://github.com/[YOUR_GIRHUB_ID]/catalog.git`.
+
+```bash
+# move to workdir
+cd ~
+
+# using sed command, change repository name
+sed 's/nephio-project/[Github_user_ID]/g' ./test-infra/e2e/provision/playbooks/roles/bootstrap/defaults/main.yaml
+sed 's/nephio-project/[Github_user_ID]/g' ./test-infra/e2e/provision/playbooks/roles/install/defaults/main.yaml
+```
+
+### Run `init.sh` script
+
+Then, run `init.sh` to set up Nephio R2 with optional packages.
 
 ```bash
 sudo -E ./test-infra/e2e/provision/init.sh
 ```
 
-> **IMPORTANT:** If the `test-infra` directory was named as something else, the `init.sh` will attempt to download the original `test-infra` from nephio-project. Which will eventually install KinD. Therefore, keep the cloned directory of `nephio-test-infra` git as `test-infra`.
+> **IMPORTANT:** If the `test-infra` directory is renamed, the `init.sh` script will attempt to download the original test-infra from the nephio-project, which will result in the installation of KinD. Therefore, it is important to retain the name `test-infra` for the cloned directory from the `nephio-test-infra` git repository.
 
-> **IMPORTANT:** While running init.sh, `kpt` will install package `gitea` which utilizes the PersistentVolumes created in the step 1.4. Please keep an eye on the namespace `gitea` to make sure `gitea/gitea-0` and `gitea/gitea-postgress-0` is running properly using the PersistentVolumes. If they happen to be in the status `CrashLoopBackOff`, please check if the directories designated for the PersistentVolumes are set with the correct file permissions.
+> **IMPORTANT:** While running the `init.sh` script, `kpt` will install the `gitea` package, which utilizes the PersistentVolumes created above. Please monitor the `gitea` namespace to ensure that `gitea/gitea-0` and `gitea/gitea-postgress-0` are running properly with the PersistentVolumes. If they are in a `CrashLoopBackOff` status, check that the directories designated for the PersistentVolumes have the correct `file permissions`.
 
 ### Monitoring Gitea Pods
-To keep an eye on the Namespace `gitea`, please open another terminal and use the following command to check if the Pods are up and running properly:
+
+To monitor the `gitea` namespace, please open another terminal and use the following command to verify that the Pods are functioning properly.
 
 ```bash
 watch -n 1 kubectl get pods -n gitea
 ```
 
 ### Setting Proper Permissions
-Once the `gitea/gitea-0` and `gitea/gitea-postgresql-0` starts in the `gitea` namespace, set the permission of the local path using:
+
+Once the `gitea/gitea-0` and `gitea/gitea-postgresql-0` pods have started in the `gitea` namespace, set the permissions of the local path using:
 
 ```bash
-# change file permission in PV's hostpath
+# change file permission of the hostpath for the PVs
 sudo chmod 777 ~/nephio -R 
 ```
 
