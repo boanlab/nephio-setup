@@ -95,7 +95,11 @@ sudo ifconfig eth1 up
 sudo ovs-vsctl add-port eth1 vxlan0 -- set interface vxlan0 type=vxlan options:remote_ip=[mgmt_ip_address]  options:dst_port=48319 options:tag=321
 ```
 
-### Also, create interfaces for `eth1.2` ~ `eth1.6`. These interfaces will be later connected to n3, n4, n6. Those interfaces will be connected to `eth1` OVS bridge in each worker nodes. So perform:
+These interfaces will be later connected to n3, n4, n6. 
+
+Those interfaces will be connected to `eth1` OVS bridge in each worker nodes.
+
+### Create interfaces for `eth1.2`-`eth1.6`
 
 ```bash
 ##### -----=[ In regional, edge01, edge02 clusters ]=----- ####
@@ -175,7 +179,7 @@ spec:
     - { nodeName: edge02, interfaceName: eth1}
 ```
 
-### Be aware that the srl.address shall be provided as the `mgmt` cluster's SR Linux container. Apply this using:
+### Create topology
 
 ```bash
 ##### -----=[ In mgmt cluster ]=----- ####
