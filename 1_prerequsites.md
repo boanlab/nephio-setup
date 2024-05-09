@@ -20,19 +20,19 @@ When install in GCP, VPC settings are required, and the configured VPC Network m
 To set up a VPC Network, proceed in the following order.
 
 > 1 - VPC Network > CREATE VPC NETWORK \
-> 2 - Write VPC name, Subnet name, Region, IPv4 range and press `CREATE` button
+> 2 - Input the VPC name, Subnet name, Region, IPv4 range and press `CREATE` button
 
-### Press CREATE button
+### Press the "CREATE VPC NETWORK" button
 
 ![CREATE_VPC_NETWORK](./pic/vpc_setting_1.png)
 
 ### Write the required fields
 
-> **IMPORTANT:** When we select the region, we must select the same region as the instance to which we want to apply the VPC Network.
+> **IMPORTANT:** Keep in mind that we must select the same region where the instances will be running on. 
 
 ![WRITE_FIELDS](./pic/vpc_setting_2.png)
 
-After creating a VPC Network, apply the VPC Network to the instance through the following procedure.
+Once creating the VPC network has been finished, create instances using that VPC network which was created right before.
 
 > 1 - Compute Engine > CREATE INSTANCE \
 > 2 - Write Instance name, Region, Spec \
@@ -48,7 +48,17 @@ After creating a VPC Network, apply the VPC Network to the instance through the 
 
 ### Write the required fields
 
+> **NOTE:** The official Nephio R2 document recommends using 2 vCPU and 4GB of RAM for `regional`, `edge01` and `edge02`. However, using that spec, the Kubernetes clusters will run out of CPU resources and will fail to schedule necessary Pods for Free5GC
+
 ![WRITE_FIELDS](./pic/instance_setting_1.png)
+
+Also, for convention, we will be setting the hostnames of each instances which matches the Kubernetes cluster's name. You can achieve this using the following command:
+
+> **NOTE:** Change the hostnames for `edge01` and `edge02` as well.
+
+```bash
+sudo hostnamectl set-hostname regional # for regional
+```
 
 ## 1.2 Install kubernetes
 
@@ -87,11 +97,11 @@ sudo containerd config default | sudo tee /etc/containerd/config.toml
 sudo sed -i "s/SystemdCgroup = false/SystemdCgroup = true/g" /etc/containerd/config.toml
 sudo systemctl restart containerd
 
-# add the key for Kubernetes repo
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+# add the key for kubernetes repo
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.27/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
 # add sources.list.d
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.27/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 # update repo
 sudo apt-get update
@@ -167,7 +177,7 @@ sudo apt-mark hold kubelet kubeadm kubectl
 sudo modprobe br_netfilter
 sudo bash -c 'echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables'
 
-# initialize kubeadm
+# initialize kubeadm using the config.yaml
 sudo kubeadm init --config=config.yaml --upload-certs
 
 # make kubectl work for non-root user
@@ -175,7 +185,7 @@ mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-# disable master isolation
+# enable scheduling pods to the master node
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ```
 
