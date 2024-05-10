@@ -186,14 +186,6 @@ kubectl get secret edge02-access-token-configsync -o yaml > edge02-secret.yaml
 Change the `namespace` to `config-management-system`.
 
 ```yaml
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-
-# change namespace to config-maangement-system
-=======
->>>>>>> a5d5309eabc2f8bc7eb6b410571898413a6c1cac
->>>>>>> c2d61ab (2024.05.09 update minor revision)
 apiVersion: v1
 data:
   password: OTE2YjNlZDlhZWQ5M2E5NTNjYjk1NTI1MmQ4YzBjN2QzMDk2Mzk3NA==
@@ -360,6 +352,6 @@ I0415 hh:mm:ss 12 main.go:585] "level"=1 "msg"="next sync" "wait_time"=150000000
 
 <br></br>
 ---
-|Before|  |  |  |  |  |  |Next|
-|--|--|--|--|--|--|--|--|
-|[ Go to Before Page](2_install_nephio.md) |  |  |  |  |  |  | [ Go to Next Page ](4_configure_network_topology.md)|
+|Before|Next|
+|--|--|
+|[ Go to Before Page](2_install_nephio.md) | [ Go to Next Page ](4_configure_network_topology.md)|

@@ -2,10 +2,10 @@
 
 ## 1.1 Prepare Servers
 
-The test environment contains 4 servers:
+The Nephio+Free5gc environment consists of 4 servers:
 
-> Official Nephio GCP utilizes a single server with 8 vCPU and 8GB of RAM. \
-> However, we need more resources to properly set up Nephio and Free5gc directly on servers.
+> Official GCP setup uses Kind to install and configure Nephio and Free5gc on a single server (8 vCPU and 8GB of RAM). \
+> However, as we want to set up Nephio and Free5gc directly on servers, we need more resources.
 
 > **NOTE:** You need to configure the following IP addresses depending on your environment.
 
@@ -67,7 +67,7 @@ We use the following versions to set up Nephio and Free5gc.
 # update repo
 sudo apt-get update
 
-# add GPG key
+# add gpg key
 sudo apt-get install -y curl ca-certificates gnupg
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
@@ -110,8 +110,6 @@ sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 ```
 ### Create `config.yaml` file for each cluster
-
-Refer to the following yaml files.
 
 <details>
   <summary>mgmt_config.yaml</summary>
@@ -189,8 +187,9 @@ kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 
 kubectl create -f https://raw.githubusercontent.com/aojea/kindnet/master/install-kindnet.yaml
 kubectl get nodes
-# NAME   STATUS   ROLES           AGE    VERSION
-# np-m   Ready    control-plane   7d1h   v1.27.12
+
+NAME   STATUS   ROLES           AGE    VERSION
+np-m   Ready    control-plane   7d1h   v1.27.12
 ```
 
 ## 1.3 Install Packages
@@ -322,7 +321,7 @@ spec:
 # modify gitea-pv.yaml
 sed -i 's/[USER]/$USER/g' gitea-pv.yaml
 
-# apply the YAML file to create 2 local path PVs
+# apply the yaml file to create 2 local path PVs
 kubectl apply -f gitea-pv.yaml
 ```
 
@@ -330,4 +329,4 @@ kubectl apply -f gitea-pv.yaml
 ---
 |Index|Next|
 |--|--|
-|[ Go to Index Page](README.md) | [ Go to Next Page ](2_install_nephio.md)|
+|[ Go to Index Page](README.md) |  [ Go to Next Page ](2_install_nephio.md)|
